@@ -120,23 +120,40 @@
         border-radius: 20px 20px 0 0;
         transition: height 0.3s ease;
       }
-      .panel.collapsed { height: 52px; overflow: hidden; }
+      .panel.collapsed { height: 56px; overflow: hidden; }
       .panel.collapsed .panel-header,
       .panel.collapsed .panel-list { display: none; }
       .toggle-btn { display: none; }
       .mobile-handle {
         display: flex; align-items: center; justify-content: center;
-        padding: 14px; cursor: pointer; gap: 8px;
+        padding: 16px; cursor: pointer; gap: 10px;
         background: linear-gradient(135deg, #fff5e6 0%, #fffcf5 100%);
         border-radius: 20px 20px 0 0;
       }
       .mobile-handle .handle-bar {
-        width: 40px; height: 5px; border-radius: 3px; background: #ffd6a8;
+        width: 44px; height: 5px; border-radius: 3px; background: #ffd6a8;
       }
       .mobile-handle .handle-text {
-        font-size: 13px; color: #d4520a; font-weight: 800;
+        font-size: 14px; color: #d4520a; font-weight: 800;
+      }
+      /* 收起时拉手条更醒目 */
+      .panel.collapsed .mobile-handle {
+        background: linear-gradient(135deg, #ffe4c9 0%, #fff5e6 100%);
+        box-shadow: 0 -4px 12px rgba(212,82,10,0.1);
+        animation: pulse-handle 2s ease-in-out infinite;
+      }
+      @keyframes pulse-handle {
+        0%, 100% { box-shadow: 0 -4px 12px rgba(212,82,10,0.1); }
+        50% { box-shadow: 0 -4px 16px rgba(212,82,10,0.25); }
+      }
+      .panel.collapsed .mobile-handle .handle-bar {
+        background: #ff8c42;
       }
       .map-area { flex: 1; }
+      /* 地图样式按钮移到左下角，避免和缩放控件冲突 */
+      .map-style-btn {
+        right: auto; left: 14px; bottom: 14px;
+      }
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
@@ -171,7 +188,7 @@
   </div>
   <div class="map-area">
     <div id="gmap"></div>
-    <button class="map-style-btn" id="mapStyleBtn">🗺️ 简洁地图</button>
+    <button class="map-style-btn" id="mapStyleBtn">🗺️ 切换标准地图</button>
   </div>
 </div>
 
@@ -271,7 +288,7 @@ function initMap() {
   document.getElementById('mapStyleBtn').addEventListener('click', () => {
     useSimpleMap = !useSimpleMap;
     gmap.setOptions({ styles: useSimpleMap ? SIMPLE_STYLE : STANDARD_STYLE });
-    document.getElementById('mapStyleBtn').textContent = useSimpleMap ? '🗺️ 标准地图' : '🎨 简洁地图';
+    document.getElementById('mapStyleBtn').textContent = useSimpleMap ? '🗺️ 切换标准地图' : '🎨 切换简洁地图';
   });
 
   // 尝试定位 - 用小人 emoji
@@ -350,7 +367,7 @@ toggleBtn.addEventListener('click', () => {
 // 手机端拉手条
 document.getElementById('mobileHandle').addEventListener('click', () => {
   panel.classList.toggle('collapsed');
-  document.getElementById('handleText').textContent = panel.classList.contains('collapsed') ? '展开列表 ▲' : '收起列表 ▼';
+  document.getElementById('handleText').textContent = panel.classList.contains('collapsed') ? '👆 点击展开餐厅列表' : '收起列表 ▼';
 });
 
 searchInput.addEventListener('input', renderList);
