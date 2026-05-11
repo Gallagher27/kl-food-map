@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>吉隆坡美食地图</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQxYxELd4rPwhCAaxwVCdu6GZcEv2uQ="
+    crossorigin=""
+  />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f5ef;
+      --panel: #fffdf8;
+      --ink: #1f2933;
+      --muted: #6b7280;
+      --line: #ded8cb;
+      --accent: #c9442f;
+      --accent-2: #0f766e;
+      --road: #d69122;
+      --shadow: 0 18px 50px rgba(30, 31, 35, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 390px minmax(0, 1fr);
+      height: 100%;
+      min-height: 0;
+    }
+
+    .sidebar {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      gap: 14px;
+      min-height: 0;
+      padding: 18px;
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      z-index: 2;
+    }
+
+    .brand {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .subline {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .count {
+      flex: 0 0 auto;
+      min-width: 58px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      text-align: center;
+      background: #fbfaf6;
+    }
+
+    .count strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1;
+      color: var(--accent);
+    }
+
+    .count span {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 10px;
+    }
+
+    .search-row,
+    .filter-row,
+    .action-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .search-row {
+      grid-template-columns: minmax(0, 1fr) 44px;
+    }
+
+    .filter-row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .action-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .field,
+    .select {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+    }
+
+    .field:focus,
+    .select:focus,
+    textarea:focus {
+      border-color: rgba(201, 68, 47, 0.75);
+      box-shadow: 0 0 0 3px rgba(201, 68, 47, 0.12);
+    }
+
+    .icon-btn,
+    .text-btn {
+      height: 42px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #fff;
+      background: var(--accent);
+      white-space: nowrap;
+    }
+
+    .text-btn.secondary,
+    .icon-btn.secondary {
+      color: var(--ink);
+      background: #efebe2;
+      border: 1px solid var(--line);
+    }
+
+    .text-btn.ghost {
+      color: var(--accent-2);
+      background: transparent;
+      border: 1px solid rgba(15, 118, 110, 0.25);
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .places {
+      min-height: 0;
+      overflow: auto;
+      padding-right: 3px;
+    }
+
+    .place-card {
+      width: 100%;
+      margin: 0 0 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: left;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    }
+
+    .place-card:hover,
+    .place-card.active {
+      border-color: rgba(201, 68, 47, 0.65);
+      box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .place-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .place-title strong {
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .distance {
+      flex: 0 0 auto;
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #f1efe8;
+      color: #4b5563;
+    }
+
+    .stars {
+      display: inline-flex;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .star {
+      width: 26px;
+      height: 26px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 6px;
+      color: #c5bca8;
+      background: transparent;
+      line-height: 1;
+    }
+
+    .star.filled {
+      color: #d49a17;
+    }
+
+    .details {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      min-height: 116px;
+    }
+
+    .empty-detail {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .detail-head h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .small-btn {
+      min-width: 38px;
+      height: 34px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink);
+      background: #efebe2;
+      border: 1px solid var(--line);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .metric {
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: #f8f6f0;
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .note-area {
+      width: 100%;
+      min-height: 78px;
+      resize: vertical;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .map-wrap {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      background: #e9e0cd;
+    }
+
+    .map-badge {
+      position: absolute;
+      right: 18px;
+      top: 18px;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255, 253, 248, 0.92);
+      border: 1px solid rgba(222, 216, 203, 0.9);
+      box-shadow: 0 12px 28px rgba(31, 41, 51, 0.12);
+      backdrop-filter: blur(12px);
+      font-size: 13px;
+    }
+
+    .legend {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 500;
+      width: min(310px, calc(100% - 36px));
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: rgba(255, 253, 248, 0.94);
+      border: 1px solid rgba(222, 216, 203, 0.9);
+      box-shadow: 0 12px 28px rgba(31, 41, 51, 0.12);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 7px;
+      color: var(--ink);
+    }
+
+    .road-key,
+    .food-key,
+    .you-key {
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+
+    .road-key {
+      width: 28px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--road);
+    }
+
+    .food-key {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+
+    .you-key {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+    }
+
+    .food-marker {
+      width: 30px;
+      height: 30px;
+      border-radius: 50% 50% 50% 8px;
+      transform: rotate(-45deg);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--accent);
+      border: 2px solid #fff;
+      box-shadow: 0 8px 18px rgba(31, 41, 51, 0.25);
+    }
+
+    .food-marker span {
+      transform: rotate(45deg);
+      display: block;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .user-marker {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #2563eb;
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.18), 0 8px 18px rgba(31, 41, 51, 0.24);
+    }
+
+    .road-label {
+      padding: 2px 6px;
+      border-radius: 999px;
+      color: #7c4b00;
+      background: rgba(255, 253, 248, 0.82);
+      border: 1px solid rgba(214, 145, 34, 0.32);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 5px 12px rgba(31, 41, 51, 0.08);
+    }
+
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+    }
+
+    .popup-title {
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .popup-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: 52vh auto;
+        height: auto;
+        min-height: 100%;
+      }
+
+      .map-wrap {
+        grid-row: 1;
+        min-height: 420px;
+      }
+
+      .sidebar {
+        grid-row: 2;
+        min-height: 620px;
+        border-right: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .map-badge {
+        left: 12px;
+        right: 12px;
+        top: 12px;
+      }
+
+      .legend {
+        display: none;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .sidebar {
+        padding: 14px;
+      }
+
+      .brand {
+        display: block;
+      }
+
+      .count {
+        display: none;
+      }
+
+      .filter-row,
+      .action-row,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <header class="brand">
+        <div>
+          <h1>吉隆坡美食地图</h1>
+          <p class="subline">市区简图、收藏餐厅、距离、星级和备注。</p>
+        </div>
+        <div class="count" aria-label="餐厅数量">
+          <strong id="placeCount">0</strong>
+          <span>地点</span>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="地图工具">
+        <div class="search-row">
+          <input class="field" id="searchInput" type="search" placeholder="搜索餐厅、区域、菜系" />
+          <button class="icon-btn" id="locateBtn" title="定位我">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg>
+          </button>
+        </div>
+        <div class="filter-row">
+          <select class="select" id="categoryFilter" aria-label="菜系筛选"></select>
+          <select class="select" id="sortSelect" aria-label="排序">
+            <option value="nearest">离我最近</option>
+            <option value="rating">Google 评分</option>
+            <option value="mine">我的星级</option>
+            <option value="name">名称</option>
+          </select>
+        </div>
+        <div class="action-row">
+          <button class="text-btn secondary" id="importBtn">导入</button>
+          <button class="text-btn secondary" id="exportBtn">导出</button>
+          <button class="text-btn ghost" id="resetBtn">重置</button>
+          <input class="hidden" id="fileInput" type="file" accept=".json,.csv,application/json,text/csv" />
+        </div>
+      </section>
+
+      <main class="places" id="placesList" aria-label="美食列表"></main>
+
+      <section class="details" id="detailsPanel" aria-label="地点详情">
+        <div class="empty-detail">选择一个地点后，可记录你的 1-5 星评价和备注。定位开启后，会按当前位置计算大致直线距离。</div>
+      </section>
+    </aside>
+
+    <section class="map-wrap">
+      <div id="map" aria-label="吉隆坡地图"></div>
+      <div class="map-badge" id="statusBadge">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="statusText">吉隆坡市中心</span>
+      </div>
+      <div class="legend">
+        <div>简化主干道叠加在底图上，地点数据可从 JSON 或 CSV 导入。</div>
+        <div class="legend-row"><span class="road-key"></span><span>主干道</span></div>
+        <div class="legend-row"><span class="food-key"></span><span>美食点</span></div>
+        <div class="legend-row"><span class="you-key"></span><span>我的位置</span></div>
+      </div>
+    </section>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    const STORAGE_KEY = "kl-food-map-v1";
+    const NOTES_KEY = "kl-food-map-notes-v1";
+    const DEFAULT_CENTER = [3.1457, 101.7006];
+
+    const samplePlaces = [
+      {
+        id: "jalan-alor",
+        name: "Jalan Alor Food Street",
+        area: "Bukit Bintang",
+        category: "夜市/街边",
+        price: "$$",
+        googleRating: 4.1,
+        lat: 3.1468,
+        lng: 101.7085,
+        tags: ["夜宵", "游客多", "选择多"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Jalan%20Alor%20Food%20Street%20Kuala%20Lumpur"
+      },
+      {
+        id: "lot10-hutong",
+        name: "Lot 10 Hutong",
+        area: "Bukit Bintang",
+        category: "熟食中心",
+        price: "$$",
+        googleRating: 4.1,
+        lat: 3.1463,
+        lng: 101.7116,
+        tags: ["商场", "多人友好", "经典摊位"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Lot%2010%20Hutong%20Kuala%20Lumpur"
+      },
+      {
+        id: "nasi-kandar-pelita",
+        name: "Nasi Kandar Pelita",
+        area: "KLCC",
+        category: "马来/印度",
+        price: "$",
+        googleRating: 4.1,
+        lat: 3.1581,
+        lng: 101.7146,
+        tags: ["咖喱", "营业时间长", "快餐"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Nasi%20Kandar%20Pelita%20Kuala%20Lumpur"
+      },
+      {
+        id: "wanjo",
+        name: "Nasi Lemak Wanjo Kampung Baru",
+        area: "Kampung Baru",
+        category: "马来",
+        price: "$",
+        googleRating: 4.2,
+        lat: 3.1629,
+        lng: 101.7062,
+        tags: ["椰浆饭", "本地感", "排队"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Nasi%20Lemak%20Wanjo%20Kampung%20Baru"
+      },
+      {
+        id: "lai-foong",
+        name: "Lai Foong Lala Noodles",
+        area: "Chinatown",
+        category: "华人/面食",
+        price: "$",
+        googleRating: 4.2,
+        lat: 3.1449,
+        lng: 101.6967,
+        tags: ["啦啦米", "老店", "午餐"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Lai%20Foong%20Lala%20Noodles"
+      },
+      {
+        id: "ho-kow",
+        name: "Ho Kow Hainam Kopitiam",
+        area: "Chinatown",
+        category: "咖啡店",
+        price: "$$",
+        googleRating: 4.2,
+        lat: 3.1432,
+        lng: 101.6975,
+        tags: ["早餐", "海南咖啡", "拍照"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Ho%20Kow%20Hainam%20Kopitiam"
+      },
+      {
+        id: "merchants-lane",
+        name: "Merchant's Lane",
+        area: "Chinatown",
+        category: "咖啡馆",
+        price: "$$",
+        googleRating: 4.3,
+        lat: 3.1418,
+        lng: 101.6979,
+        tags: ["早午餐", "咖啡", "适合聊天"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Merchant%27s%20Lane%20Kuala%20Lumpur"
+      },
+      {
+        id: "icc-pudu",
+        name: "ICC Pudu",
+        area: "Pudu",
+        category: "熟食中心",
+        price: "$",
+        googleRating: 4.2,
+        lat: 3.1367,
+        lng: 101.7117,
+        tags: ["早餐", "小吃", "本地人多"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=ICC%20Pudu"
+      },
+      {
+        id: "sek-yuen",
+        name: "Sek Yuen Restaurant",
+        area: "Pudu",
+        category: "华人/正餐",
+        price: "$$",
+        googleRating: 4.2,
+        lat: 3.1348,
+        lng: 101.7136,
+        tags: ["粤菜", "老字号", "多人"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Sek%20Yuen%20Restaurant%20Kuala%20Lumpur"
+      },
+      {
+        id: "yut-kee",
+        name: "Yut Kee Restaurant",
+        area: "Chow Kit",
+        category: "海南/西餐",
+        price: "$$",
+        googleRating: 4.2,
+        lat: 3.1586,
+        lng: 101.6973,
+        tags: ["海南鸡扒", "早餐", "老店"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Yut%20Kee%20Restaurant"
+      },
+      {
+        id: "madam-kwans",
+        name: "Madam Kwan's Pavilion",
+        area: "Bukit Bintang",
+        category: "马来/娘惹",
+        price: "$$$",
+        googleRating: 4.1,
+        lat: 3.1491,
+        lng: 101.7132,
+        tags: ["商场", "游客友好", "正餐"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Madam%20Kwan%27s%20Pavilion%20Kuala%20Lumpur"
+      },
+      {
+        id: "din-tai-fung-pavilion",
+        name: "Din Tai Fung Pavilion",
+        area: "Bukit Bintang",
+        category: "中餐",
+        price: "$$$",
+        googleRating: 4.3,
+        lat: 3.1492,
+        lng: 101.7130,
+        tags: ["小笼包", "商场", "稳定"],
+        googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Din%20Tai%20Fung%20Pavilion%20Kuala%20Lumpur"
+      }
+    ];
+
+    const majorRoads = [
+      {
+        name: "Jalan Tun Razak",
+        color: "#cf7f1a",
+        points: [[3.1810, 101.7141], [3.1652, 101.7170], [3.1540, 101.7174], [3.1400, 101.7181], [3.1283, 101.7201]]
+      },
+      {
+        name: "Jalan Ampang",
+        color: "#d69122",
+        points: [[3.1608, 101.6907], [3.1582, 101.7044], [3.1597, 101.7133], [3.1594, 101.7273]]
+      },
+      {
+        name: "Jalan Sultan Ismail",
+        color: "#d69122",
+        points: [[3.1548, 101.6960], [3.1525, 101.7041], [3.1487, 101.7117], [3.1450, 101.7194]]
+      },
+      {
+        name: "Jalan Bukit Bintang",
+        color: "#df9f31",
+        points: [[3.1461, 101.7055], [3.1468, 101.7094], [3.1476, 101.7134], [3.1491, 101.7173]]
+      },
+      {
+        name: "Jalan Pudu",
+        color: "#c96a1d",
+        points: [[3.1486, 101.7003], [3.1432, 101.7040], [3.1378, 101.7081], [3.1281, 101.7130]]
+      },
+      {
+        name: "Jalan Kuching",
+        color: "#c96a1d",
+        points: [[3.1787, 101.6838], [3.1660, 101.6897], [3.1548, 101.6946], [3.1475, 101.6969]]
+      },
+      {
+        name: "Jalan Syed Putra",
+        color: "#cf7f1a",
+        points: [[3.1517, 101.6912], [3.1438, 101.6902], [3.1327, 101.6884], [3.1195, 101.6874]]
+      }
+    ];
+
+    let places = loadPlaces();
+    let notes = loadNotes();
+    let selectedId = places[0]?.id || null;
+    let userLocation = null;
+    const markers = new Map();
+    let userMarker = null;
+
+    const map = L.map("map", {
+      zoomControl: false,
+      preferCanvas: true
+    }).setView(DEFAULT_CENTER, 13);
+
+    L.control.zoom({ position: "bottomleft" }).addTo(map);
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 20,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    const roadsLayer = L.layerGroup().addTo(map);
+    const markerLayer = L.layerGroup().addTo(map);
+
+    drawRoads();
+    renderAll();
+    setTimeout(() => {
+      map.invalidateSize();
+      fitToPlaces();
+    }, 350);
+    new ResizeObserver(() => map.invalidateSize()).observe(document.querySelector(".map-wrap"));
+
+    document.getElementById("searchInput").addEventListener("input", renderAll);
+    document.getElementById("categoryFilter").addEventListener("change", renderAll);
+    document.getElementById("sortSelect").addEventListener("change", renderAll);
+    document.getElementById("locateBtn").addEventListener("click", locateUser);
+    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("fileInput").click());
+    document.getElementById("fileInput").addEventListener("change", handleFileImport);
+    document.getElementById("exportBtn").addEventListener("click", exportData);
+    document.getElementById("resetBtn").addEventListener("click", resetSample);
+
+    function loadPlaces() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        return Array.isArray(stored) && stored.length ? normalizePlaces(stored) : samplePlaces;
+      } catch {
+        return samplePlaces;
+      }
+    }
+
+    function loadNotes() {
+      try {
+        return JSON.parse(localStorage.getItem(NOTES_KEY) || "{}") || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function savePlaces() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
+    }
+
+    function saveNotes() {
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    }
+
+    function normalizePlaces(input) {
+      return input
+        .map((item, index) => {
+          const lat = Number(item.lat ?? item.latitude);
+          const lng = Number(item.lng ?? item.lon ?? item.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+          const name = String(item.name || item.title || `地点 ${index + 1}`).trim();
+          return {
+            id: String(item.id || slugify(name) || `place-${index + 1}`),
+            name,
+            area: String(item.area || item.neighborhood || item.district || "吉隆坡").trim(),
+            category: String(item.category || item.cuisine || item.type || "餐厅").trim(),
+            price: String(item.price || item.priceLevel || "").trim(),
+            googleRating: item.googleRating === "" || item.googleRating == null ? null : Number(item.googleRating),
+            lat,
+            lng,
+            tags: Array.isArray(item.tags) ? item.tags : String(item.tags || "").split(/[|,，、]/).map((tag) => tag.trim()).filter(Boolean),
+            googleMapsUrl: String(item.googleMapsUrl || item.url || item.mapsUrl || "").trim(),
+            placeId: String(item.placeId || "").trim()
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function slugify(value) {
+      return value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "");
+    }
+
+    function drawRoads() {
+      roadsLayer.clearLayers();
+      majorRoads.forEach((road) => {
+        L.polyline(road.points, {
+          color: road.color,
+          weight: 5,
+          opacity: 0.88,
+          lineCap: "round",
+          lineJoin: "round"
+        }).addTo(roadsLayer);
+
+        const middle = road.points[Math.floor(road.points.length / 2)];
+        L.marker(middle, {
+          interactive: false,
+          icon: L.divIcon({
+            className: "",
+            html: `<span class="road-label">${road.name}</span>`,
+            iconSize: [120, 24],
+            iconAnchor: [50, 12]
+          })
+        }).addTo(roadsLayer);
+      });
+    }
+
+    function renderAll() {
+      renderCategoryOptions();
+      const visible = getVisiblePlaces();
+      renderMarkers(visible);
+      renderList(visible);
+      renderDetails();
+      document.getElementById("placeCount").textContent = String(visible.length);
+    }
+
+    function renderCategoryOptions() {
+      const select = document.getElementById("categoryFilter");
+      const current = select.value || "all";
+      const categories = [...new Set(places.map((place) => place.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+      select.innerHTML = [
+        `<option value="all">全部菜系</option>`,
+        ...categories.map((category) => `<option value="${escapeAttr(category)}">${escapeHtml(category)}</option>`)
+      ].join("");
+      select.value = categories.includes(current) ? current : "all";
+    }
+
+    function getVisiblePlaces() {
+      const query = document.getElementById("searchInput").value.trim().toLowerCase();
+      const category = document.getElementById("categoryFilter").value;
+      const sort = document.getElementById("sortSelect").value;
+
+      const filtered = places.filter((place) => {
+        const text = [place.name, place.area, place.category, ...(place.tags || [])].join(" ").toLowerCase();
+        const matchesQuery = !query || text.includes(query);
+        const matchesCategory = category === "all" || place.category === category;
+        return matchesQuery && matchesCategory;
+      });
+
+      return filtered.sort((a, b) => {
+        if (sort === "rating") return Number(b.googleRating || 0) - Number(a.googleRating || 0);
+        if (sort === "mine") return Number(getMine(b.id).rating || 0) - Number(getMine(a.id).rating || 0);
+        if (sort === "name") return a.name.localeCompare(b.name, "zh-CN");
+        return getDistance(a) - getDistance(b);
+      });
+    }
+
+    function renderMarkers(visible) {
+      markerLayer.clearLayers();
+      markers.clear();
+      visible.forEach((place, index) => {
+        const marker = L.marker([place.lat, place.lng], {
+          icon: L.divIcon({
+            className: "",
+            html: `<div class="food-marker"><span>${index + 1}</span></div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 30],
+            popupAnchor: [0, -26]
+          })
+        }).addTo(markerLayer);
+
+        marker.bindPopup(`
+          <div class="popup-title">${escapeHtml(place.name)}</div>
+          <div class="popup-meta">${escapeHtml(place.area)} · ${escapeHtml(place.category)} · ${formatRating(place.googleRating)}</div>
+        `);
+        marker.on("click", () => selectPlace(place.id, true));
+        markers.set(place.id, marker);
+      });
+    }
+
+    function renderList(visible) {
+      const list = document.getElementById("placesList");
+      if (!visible.length) {
+        list.innerHTML = `<div class="empty-detail">没有匹配地点。</div>`;
+        return;
+      }
+
+      list.innerHTML = visible.map((place) => {
+        const mine = getMine(place.id);
+        const active = place.id === selectedId ? " active" : "";
+        return `
+          <button class="place-card${active}" data-id="${escapeAttr(place.id)}">
+            <div class="place-title">
+              <strong>${escapeHtml(place.name)}</strong>
+              <span class="distance">${formatDistance(getDistance(place))}</span>
+            </div>
+            <div class="meta">
+              <span class="pill">${escapeHtml(place.area)}</span>
+              <span class="pill">${escapeHtml(place.category)}</span>
+              <span>${formatRating(place.googleRating)}</span>
+              <span>${renderStars(mine.rating || 0, false)}</span>
+            </div>
+          </button>
+        `;
+      }).join("");
+
+      [...list.querySelectorAll(".place-card")].forEach((card) => {
+        card.addEventListener("click", () => selectPlace(card.dataset.id, true));
+      });
+    }
+
+    function renderDetails() {
+      const panel = document.getElementById("detailsPanel");
+      const place = places.find((item) => item.id === selectedId);
+      if (!place) {
+        panel.innerHTML = `<div class="empty-detail">选择一个地点后，可记录你的 1-5 星评价和备注。定位开启后，会按当前位置计算大致直线距离。</div>`;
+        return;
+      }
+
+      const mine = getMine(place.id);
+      panel.innerHTML = `
+        <div class="detail-head">
+          <div>
+            <h2>${escapeHtml(place.name)}</h2>
+            <div class="meta">
+              <span class="pill">${escapeHtml(place.area)}</span>
+              <span class="pill">${escapeHtml(place.category)}</span>
+              ${(place.tags || []).slice(0, 3).map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="small-btn" id="focusBtn" title="回到地图">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </button>
+            <button class="small-btn" id="mapsBtn" title="打开 Google Maps">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18c-2 0-4-2-4-4s2-4 4-4h3"/><path d="M14 10h3c2 0 4 2 4 4s-2 4-4 4h-3"/><path d="M9 14h6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="metric"><span>距离</span><strong>${formatDistance(getDistance(place))}</strong></div>
+          <div class="metric"><span>Google</span><strong>${formatRating(place.googleRating)}</strong></div>
+          <div class="metric"><span>价格</span><strong>${escapeHtml(place.price || "未填")}</strong></div>
+        </div>
+        <div class="meta" style="margin-bottom:8px;">
+          <span>我的星级</span>
+          <span class="stars interactive" id="ratingStars">${renderStars(mine.rating || 0, true)}</span>
+        </div>
+        <textarea class="note-area" id="noteInput" placeholder="吃完后的印象、推荐菜、避雷点、适合什么场景">${escapeHtml(mine.note || "")}</textarea>
+      `;
+
+      document.getElementById("focusBtn").addEventListener("click", () => selectPlace(place.id, true));
+      document.getElementById("mapsBtn").addEventListener("click", () => openGoogleMaps(place));
+      [...document.querySelectorAll("#ratingStars .star")].forEach((button) => {
+        button.addEventListener("click", () => {
+          setMine(place.id, { rating: Number(button.dataset.rating) });
+          renderAll();
+        });
+      });
+      document.getElementById("noteInput").addEventListener("input", (event) => {
+        setMine(place.id, { note: event.target.value });
+      });
+    }
+
+    function selectPlace(id, pan) {
+      selectedId = id;
+      const place = places.find((item) => item.id === id);
+      if (place && pan) {
+        map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 15), { duration: 0.6 });
+        const marker = markers.get(id);
+        if (marker) marker.openPopup();
+      }
+      renderAll();
+    }
+
+    function locateUser() {
+      const status = document.getElementById("statusText");
+      if (!navigator.geolocation) {
+        status.textContent = "当前浏览器不支持定位";
+        return;
+      }
+      status.textContent = "正在定位";
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          if (userMarker) userMarker.remove();
+          userMarker = L.marker([userLocation.lat, userLocation.lng], {
+            icon: L.divIcon({
+              className: "",
+              html: `<div class="user-marker"></div>`,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            })
+          }).addTo(map).bindPopup("我的位置");
+          status.textContent = "已显示当前位置";
+          map.flyTo([userLocation.lat, userLocation.lng], 14, { duration: 0.8 });
+          renderAll();
+        },
+        () => {
+          status.textContent = "定位未开启";
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    }
+
+    function getMine(id) {
+      return notes[id] || {};
+    }
+
+    function setMine(id, patch) {
+      notes[id] = { ...getMine(id), ...patch };
+      saveNotes();
+    }
+
+    function getDistance(place) {
+      if (!userLocation) return Number.POSITIVE_INFINITY;
+      return haversine(userLocation.lat, userLocation.lng, place.lat, place.lng);
+    }
+
+    function haversine(lat1, lng1, lat2, lng2) {
+      const earthKm = 6371;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      return earthKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function toRad(value) {
+      return value * Math.PI / 180;
+    }
+
+    function formatDistance(km) {
+      if (!Number.isFinite(km)) return "待定位";
+      if (km < 1) return `${Math.round(km * 1000)} m`;
+      return `${km.toFixed(km < 10 ? 1 : 0)} km`;
+    }
+
+    function formatRating(value) {
+      const rating = Number(value);
+      return Number.isFinite(rating) ? `★ ${rating.toFixed(1)}` : "未评分";
+    }
+
+    function renderStars(value, interactive) {
+      const rating = Number(value || 0);
+      return Array.from({ length: 5 }, (_, index) => {
+        const score = index + 1;
+        const filled = score <= rating ? " filled" : "";
+        if (interactive) {
+          return `<button class="star${filled}" data-rating="${score}" title="${score} 星">★</button>`;
+        }
+        return `<span class="star${filled}" aria-hidden="true">★</span>`;
+      }).join("");
+    }
+
+    async function handleFileImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      let imported;
+      try {
+        imported = file.name.toLowerCase().endsWith(".csv") ? parseCsv(text) : JSON.parse(text);
+      } catch (error) {
+        alert("文件无法解析，请检查 JSON 或 CSV 格式。");
+        event.target.value = "";
+        return;
+      }
+      const normalized = normalizePlaces(Array.isArray(imported) ? imported : imported.places || []);
+      if (!normalized.length) {
+        alert("没有找到可用地点。至少需要 name、lat、lng。");
+        event.target.value = "";
+        return;
+      }
+      places = normalized;
+      if (!Array.isArray(imported) && imported.notes && typeof imported.notes === "object") {
+        notes = imported.notes;
+        saveNotes();
+      }
+      selectedId = places[0].id;
+      savePlaces();
+      fitToPlaces();
+      renderAll();
+      event.target.value = "";
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let quoted = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+        if (char === '"' && quoted && next === '"') {
+          cell += '"';
+          i++;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === "," && !quoted) {
+          row.push(cell.trim());
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") i++;
+          row.push(cell.trim());
+          if (row.some(Boolean)) rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+      row.push(cell.trim());
+      if (row.some(Boolean)) rows.push(row);
+      const headers = rows.shift() || [];
+      return rows.map((cells) => Object.fromEntries(headers.map((header, index) => [header, cells[index] || ""])));
+    }
+
+    function exportData() {
+      const data = {
+        places,
+        notes,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "kl-food-map.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function resetSample() {
+      if (!confirm("恢复示例地点？你的星级和备注会保留。")) return;
+      places = samplePlaces;
+      selectedId = places[0].id;
+      savePlaces();
+      fitToPlaces();
+      renderAll();
+    }
+
+    function openGoogleMaps(place) {
+      const url = place.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name} ${place.area} Kuala Lumpur`)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    function fitToPlaces() {
+      const bounds = L.latLngBounds(places.map((place) => [place.lat, place.lng]));
+      if (bounds.isValid()) map.fitBounds(bounds.pad(0.18));
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+
+    setTimeout(fitToPlaces, 100);
+  </script>
+</body>
+</html>
