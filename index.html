@@ -54,22 +54,28 @@
     }
 
     .app {
-      display: grid;
-      grid-template-columns: 390px minmax(0, 1fr);
+      position: relative;
       height: 100%;
       min-height: 0;
+      overflow: hidden;
     }
 
     .sidebar {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      bottom: 16px;
+      width: min(390px, calc(100vw - 32px));
       display: grid;
       grid-template-rows: auto auto minmax(0, 1fr) auto;
       gap: 14px;
       min-height: 0;
       padding: 18px;
-      background: var(--panel);
-      border-right: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      z-index: 2;
+      background: rgba(255, 253, 248, 0.82);
+      border: 1px solid rgba(222, 216, 203, 0.92);
+      border-radius: 8px;
+      box-shadow: 0 14px 34px rgba(30, 31, 35, 0.14);
+      z-index: 650;
     }
 
     .brand {
@@ -100,7 +106,7 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       text-align: center;
-      background: #fbfaf6;
+      background: rgba(251, 250, 246, 0.9);
     }
 
     .count strong {
@@ -208,16 +214,15 @@
       padding: 12px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.88);
       text-align: left;
-      transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+      transition: border-color 0.12s ease;
     }
 
     .place-card:hover,
     .place-card.active {
       border-color: rgba(201, 68, 47, 0.65);
-      box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
-      transform: translateY(-1px);
+      box-shadow: none;
     }
 
     .place-title {
@@ -367,7 +372,8 @@
     }
 
     .map-wrap {
-      position: relative;
+      position: absolute;
+      inset: 0;
       min-width: 0;
       min-height: 0;
       overflow: hidden;
@@ -464,23 +470,44 @@
     }
 
     .food-marker {
-      width: 36px;
-      height: 36px;
+      width: 42px;
+      height: 42px;
       border-radius: 50% 50% 50% 8px;
       transform: rotate(-45deg);
       display: grid;
       place-items: center;
       color: #fff;
       background: var(--accent);
-      border: 2px solid #fff;
-      box-shadow: 0 8px 18px rgba(31, 41, 51, 0.25);
+      border: 3px solid #fff;
+      box-shadow: 0 7px 16px rgba(31, 41, 51, 0.32);
     }
 
     .food-marker span {
       transform: rotate(45deg);
       display: block;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 800;
+    }
+
+    .food-marker-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transform: translateY(-50%);
+    }
+
+    .marker-label {
+      max-width: 180px;
+      padding: 5px 8px;
+      border: 1px solid rgba(201, 68, 47, 0.22);
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255, 253, 248, 0.94);
+      box-shadow: 0 5px 14px rgba(31, 41, 51, 0.15);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: normal;
     }
 
     .user-marker {
@@ -528,32 +555,36 @@
 
     @media (max-width: 900px) {
       body {
-        overflow: auto;
+        overflow: hidden;
       }
 
       .app {
-        grid-template-columns: 1fr;
-        grid-template-rows: 52vh auto;
-        height: auto;
-        min-height: 100%;
+        height: 100%;
+        min-height: 0;
       }
 
       .map-wrap {
-        grid-row: 1;
-        min-height: 420px;
+        min-height: 0;
       }
 
       .sidebar {
-        grid-row: 2;
-        min-height: 620px;
-        border-right: 0;
-        border-top: 1px solid var(--line);
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+        width: auto;
+        height: 45vh;
+        min-height: 360px;
       }
 
       .map-badge {
         left: 12px;
         right: 12px;
         top: 12px;
+      }
+
+      .public-link {
+        top: 64px;
       }
 
       .legend {
@@ -890,7 +921,11 @@
     const map = L.map("map", {
       zoomControl: false,
       preferCanvas: true,
-      attributionControl: true
+      attributionControl: true,
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+      inertia: true
     }).setView(DEFAULT_CENTER, 13);
 
     L.control.zoom({ position: "bottomleft" }).addTo(map);
@@ -994,17 +1029,6 @@
           lineCap: "round",
           lineJoin: "round"
         }).addTo(roadsLayer);
-
-        const middle = road.points[Math.floor(road.points.length / 2)];
-        L.marker(middle, {
-          interactive: false,
-          icon: L.divIcon({
-            className: "",
-            html: `<span class="road-label">${road.name}</span>`,
-            iconSize: [120, 24],
-            iconAnchor: [50, 12]
-          })
-        }).addTo(roadsLayer);
       });
     }
 
@@ -1055,9 +1079,9 @@
         const marker = L.marker([place.lat, place.lng], {
           icon: L.divIcon({
             className: "",
-            html: `<div class="food-marker"><span>${index + 1}</span></div>`,
-            iconSize: [36, 36],
-            iconAnchor: [18, 36],
+            html: `<div class="food-marker-wrap"><div class="food-marker"><span>${index + 1}</span></div><div class="marker-label">${escapeHtml(place.name)}</div></div>`,
+            iconSize: [230, 48],
+            iconAnchor: [21, 24],
             popupAnchor: [0, -26]
           }),
           zIndexOffset: 1000
