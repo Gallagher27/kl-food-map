@@ -865,7 +865,7 @@
     updateLocationPermissionStatus();
     setTimeout(() => {
       map.invalidateSize();
-      fitToPlaces();
+      focusInitialView();
     }, 350);
     new ResizeObserver(() => map.invalidateSize()).observe(document.querySelector(".map-wrap"));
 
@@ -1343,7 +1343,16 @@
 
     function fitToPlaces() {
       const bounds = L.latLngBounds(places.map((place) => [place.lat, place.lng]));
-      if (bounds.isValid()) map.fitBounds(bounds.pad(0.18));
+      if (bounds.isValid()) map.fitBounds(bounds.pad(0.18), { maxZoom: 14 });
+    }
+
+    function focusInitialView() {
+      const place = places.find((item) => item.id === selectedId) || places[0];
+      if (place) {
+        map.setView([place.lat, place.lng], 14);
+      } else {
+        map.setView(DEFAULT_CENTER, 13);
+      }
     }
 
     function escapeHtml(value) {
