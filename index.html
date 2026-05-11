@@ -370,12 +370,21 @@
       position: relative;
       min-width: 0;
       min-height: 0;
+      overflow: hidden;
     }
 
     #map {
       height: 100%;
       width: 100%;
       background: #dbe7df;
+    }
+
+    .leaflet-container,
+    .leaflet-pane,
+    .leaflet-map-pane,
+    .leaflet-tile-pane {
+      width: 100%;
+      height: 100%;
     }
 
     .leaflet-container {
@@ -398,6 +407,13 @@
       box-shadow: 0 12px 28px rgba(31, 41, 51, 0.12);
       backdrop-filter: blur(12px);
       font-size: 13px;
+    }
+
+    .public-link {
+      top: 72px;
+      color: var(--accent-2);
+      text-decoration: none;
+      font-weight: 700;
     }
 
     .legend {
@@ -629,6 +645,7 @@
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
         <span id="statusText">点击定位显示实时位置</span>
       </div>
+      <a class="map-badge public-link" href="https://gallagher27.github.io/kl-food-map/" target="_blank" rel="noopener">打开公网定位版</a>
       <div class="legend">
         <div>使用公开地图底图，叠加 eat 收藏餐厅、距离和个人备注。</div>
         <div class="legend-row"><span class="road-key"></span><span>主干道</span></div>
@@ -885,8 +902,9 @@
     }).setView(DEFAULT_CENTER, 13);
 
     L.control.zoom({ position: "bottomleft" }).addTo(map);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const baseLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
+      detectRetina: false,
       updateWhenIdle: true,
       updateWhenZooming: false,
       keepBuffer: 2,
@@ -902,7 +920,12 @@
     setTimeout(() => {
       map.invalidateSize();
       focusInitialView();
+      baseLayer.redraw();
     }, 350);
+    setTimeout(() => {
+      map.invalidateSize();
+      baseLayer.redraw();
+    }, 1200);
     new ResizeObserver(() => map.invalidateSize()).observe(document.querySelector(".map-wrap"));
 
     document.getElementById("searchInput").addEventListener("input", renderAll);
@@ -1153,6 +1176,10 @@
     function locateUser() {
       const status = document.getElementById("statusText");
       const button = document.getElementById("locateBtn");
+      if (!window.isSecureContext) {
+        status.textContent = "定位需要 HTTPS，请打开公网版本";
+        return;
+      }
       if (!navigator.geolocation) {
         status.textContent = "当前浏览器不支持定位";
         return;
@@ -1188,6 +1215,10 @@
 
     async function updateLocationPermissionStatus() {
       const status = document.getElementById("statusText");
+      if (!window.isSecureContext) {
+        status.textContent = "定位需要 HTTPS，请打开公网版本";
+        return;
+      }
       if (!navigator.geolocation) {
         status.textContent = "当前浏览器不支持定位";
         return;
