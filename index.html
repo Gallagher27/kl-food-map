@@ -463,8 +463,8 @@
     }
 
     .food-marker {
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       border-radius: 50% 50% 50% 8px;
       transform: rotate(-45deg);
       display: grid;
@@ -478,7 +478,7 @@
     .food-marker span {
       transform: rotate(45deg);
       display: block;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 800;
     }
 
@@ -1003,10 +1003,11 @@
           icon: L.divIcon({
             className: "",
             html: `<div class="food-marker"><span>${index + 1}</span></div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 30],
+            iconSize: [36, 36],
+            iconAnchor: [18, 36],
             popupAnchor: [0, -26]
-          })
+          }),
+          zIndexOffset: 1000
         }).addTo(markerLayer);
 
         marker.bindPopup(`
