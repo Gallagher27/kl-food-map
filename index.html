@@ -71,11 +71,36 @@
       gap: 14px;
       min-height: 0;
       padding: 18px;
-      background: rgba(255, 253, 248, 0.82);
+      background: rgba(255, 253, 248, 0.58);
       border: 1px solid rgba(222, 216, 203, 0.92);
       border-radius: 8px;
-      box-shadow: 0 14px 34px rgba(30, 31, 35, 0.14);
+      box-shadow: none;
       z-index: 650;
+    }
+
+    .sidebar.collapsed {
+      bottom: auto;
+      width: 58px;
+      height: 58px;
+      padding: 8px;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed > :not(.collapse-btn) {
+      display: none;
+    }
+
+    .collapse-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 2;
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
     }
 
     .brand {
@@ -83,6 +108,7 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 12px;
+      padding-right: 44px;
     }
 
     h1 {
@@ -287,8 +313,10 @@
 
     .details {
       border-top: 1px solid var(--line);
-      padding-top: 12px;
-      min-height: 116px;
+      padding-top: 10px;
+      max-height: 188px;
+      min-height: 0;
+      overflow: auto;
     }
 
     .empty-detail {
@@ -306,7 +334,7 @@
 
     .detail-head h2 {
       margin: 0;
-      font-size: 18px;
+      font-size: 15px;
       line-height: 1.2;
       letter-spacing: 0;
     }
@@ -333,7 +361,7 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
-      margin: 12px 0;
+      margin: 8px 0;
     }
 
     .metric {
@@ -361,7 +389,8 @@
 
     .note-area {
       width: 100%;
-      min-height: 78px;
+      min-height: 42px;
+      max-height: 68px;
       resize: vertical;
       padding: 10px;
       border: 1px solid var(--line);
@@ -467,47 +496,6 @@
       border-radius: 50%;
       background: #2563eb;
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
-    }
-
-    .food-marker {
-      width: 42px;
-      height: 42px;
-      border-radius: 50% 50% 50% 8px;
-      transform: rotate(-45deg);
-      display: grid;
-      place-items: center;
-      color: #fff;
-      background: var(--accent);
-      border: 3px solid #fff;
-      box-shadow: 0 7px 16px rgba(31, 41, 51, 0.32);
-    }
-
-    .food-marker span {
-      transform: rotate(45deg);
-      display: block;
-      font-size: 16px;
-      font-weight: 800;
-    }
-
-    .food-marker-wrap {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      transform: translateY(-50%);
-    }
-
-    .marker-label {
-      max-width: 180px;
-      padding: 5px 8px;
-      border: 1px solid rgba(201, 68, 47, 0.22);
-      border-radius: 8px;
-      color: var(--ink);
-      background: rgba(255, 253, 248, 0.94);
-      box-shadow: 0 5px 14px rgba(31, 41, 51, 0.15);
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1.2;
-      white-space: normal;
     }
 
     .user-marker {
@@ -620,6 +608,7 @@
 <body>
   <div class="app">
     <aside class="sidebar">
+      <button class="collapse-btn" id="collapseBtn" title="收起侧边栏">‹</button>
       <header class="brand">
         <div>
           <h1>吉隆坡美食地图</h1>
@@ -965,6 +954,7 @@
     document.getElementById("fileInput").addEventListener("change", handleFileImport);
     document.getElementById("exportBtn").addEventListener("click", exportData);
     document.getElementById("resetBtn").addEventListener("click", resetSample);
+    document.getElementById("collapseBtn").addEventListener("click", toggleSidebar);
 
     function loadPlaces() {
       try {
@@ -1017,6 +1007,15 @@
 
     function slugify(value) {
       return value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "");
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.querySelector(".sidebar");
+      const button = document.getElementById("collapseBtn");
+      const collapsed = sidebar.classList.toggle("collapsed");
+      button.textContent = collapsed ? "›" : "‹";
+      button.title = collapsed ? "展开侧边栏" : "收起侧边栏";
+      setTimeout(() => map.invalidateSize(), 120);
     }
 
     function drawRoads() {
@@ -1076,21 +1075,21 @@
       markerLayer.clearLayers();
       markers.clear();
       visible.forEach((place, index) => {
-        const marker = L.marker([place.lat, place.lng], {
-          icon: L.divIcon({
-            className: "",
-            html: `<div class="food-marker-wrap"><div class="food-marker"><span>${index + 1}</span></div><div class="marker-label">${escapeHtml(place.name)}</div></div>`,
-            iconSize: [230, 48],
-            iconAnchor: [21, 24],
-            popupAnchor: [0, -26]
-          }),
-          zIndexOffset: 1000
+        const selected = place.id === selectedId;
+        const marker = L.circleMarker([place.lat, place.lng], {
+          radius: selected ? 12 : 9,
+          color: "#ffffff",
+          weight: selected ? 4 : 3,
+          fillColor: selected ? "#0f766e" : "#c9442f",
+          fillOpacity: 0.95,
+          pane: "markerPane"
         }).addTo(markerLayer);
 
-        marker.bindPopup(`
-          <div class="popup-title">${escapeHtml(place.name)}</div>
-          <div class="popup-meta">${escapeHtml(place.area)} · ${escapeHtml(place.category)} · ${formatRating(place.googleRating)}</div>
-        `);
+        marker.bindTooltip(`${index + 1}. ${place.name}`, {
+          direction: "top",
+          opacity: 0.92,
+          sticky: true
+        });
         marker.on("click", () => selectPlace(place.id, true));
         markers.set(place.id, marker);
       });
@@ -1184,9 +1183,7 @@
       selectedId = id;
       const place = places.find((item) => item.id === id);
       if (place && pan) {
-        map.flyTo([place.lat, place.lng], Math.max(map.getZoom(), 15), { duration: 0.6 });
-        const marker = markers.get(id);
-        if (marker) marker.openPopup();
+        map.panTo([place.lat, place.lng], { animate: false });
       }
       renderAll();
     }
@@ -1282,7 +1279,7 @@
       }
       status.textContent = `实时定位中 · 精度约 ${Math.round(userLocation.accuracy || 0)} m`;
       if (!hasCenteredOnUser) {
-        map.flyTo([userLocation.lat, userLocation.lng], 14, { duration: 0.7 });
+        map.setView([userLocation.lat, userLocation.lng], 14, { animate: false });
         hasCenteredOnUser = true;
       }
       renderAll();
