@@ -111,6 +111,8 @@
 
     /* 手机端拉手条 - 桌面隐藏 */
     .mobile-handle { display: none; }
+    /* 手机端浮动展开按钮 - 桌面隐藏 */
+    .mobile-expand-btn { display: none; }
 
     @media (max-width: 600px) {
       .app { flex-direction: column-reverse; }
@@ -154,6 +156,24 @@
       .map-style-btn {
         right: auto; left: 14px; bottom: 14px;
       }
+      /* 手机端浮动展开按钮 - 列表收起时显示在地图底部中央 */
+      .mobile-expand-btn {
+        display: none;
+        position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+        z-index: 1001;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+        color: #fff; border: none; border-radius: 24px;
+        font-size: 14px; font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(255,107,26,0.4);
+        animation: bounce-btn 2s ease-in-out infinite;
+      }
+      .mobile-expand-btn.visible { display: block; }
+      @keyframes bounce-btn {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-4px); }
+      }
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
@@ -189,6 +209,7 @@
   <div class="map-area">
     <div id="gmap"></div>
     <button class="map-style-btn" id="mapStyleBtn">🗺️ 切换标准地图</button>
+    <button class="mobile-expand-btn" id="mobileExpandBtn">🍜 查看餐厅列表</button>
   </div>
 </div>
 
@@ -367,8 +388,20 @@ toggleBtn.addEventListener('click', () => {
 // 手机端拉手条
 document.getElementById('mobileHandle').addEventListener('click', () => {
   panel.classList.toggle('collapsed');
-  document.getElementById('handleText').textContent = panel.classList.contains('collapsed') ? '👆 点击展开餐厅列表' : '收起列表 ▼';
+  updateMobileUI();
 });
+
+// 手机端浮动展开按钮
+document.getElementById('mobileExpandBtn').addEventListener('click', () => {
+  panel.classList.remove('collapsed');
+  updateMobileUI();
+});
+
+function updateMobileUI() {
+  const collapsed = panel.classList.contains('collapsed');
+  document.getElementById('handleText').textContent = collapsed ? '👆 点击展开餐厅列表' : '收起列表 ▼';
+  document.getElementById('mobileExpandBtn').classList.toggle('visible', collapsed);
+}
 
 searchInput.addEventListener('input', renderList);
 catFilter.addEventListener('change', renderList);
