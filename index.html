@@ -80,7 +80,7 @@
 
     /* 地图区域 */
     .map-area { flex: 1; position: relative; }
-    #gmap { width: 100%; height: 100%; }
+    #gmap { width: 100%; height: 100%; background: #e8e4d8; }
 
     @media (max-width: 600px) {
       .app { flex-direction: column-reverse; }
@@ -140,33 +140,47 @@ let myLat = null, myLng = null;
 let gmap, gmarkers = {}, userMarker = null, infoWindow = null;
 
 // ===== Google Maps 初始化 =====
+// 简洁地图样式：隐藏 POI、公交、细节，只保留主干道
+const SIMPLE_STYLE = [
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.local', stylers: [{ visibility: 'simplified' }] },
+  { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'landscape.man_made', stylers: [{ visibility: 'simplified' }] },
+  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'labels', stylers: [{ visibility: 'off' }] }
+];
+
+let useSimpleMap = false;
+
 function initMap() {
   gmap = new google.maps.Map(document.getElementById('gmap'), {
     center: { lat: 3.14, lng: 101.69 },
     zoom: 12,
-    mapId: 'DEMO_MAP_ID',
-    disableDefaultUI: false,
+    disableDefaultUI: true,
     zoomControl: true,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false
+    gestureHandling: 'greedy',
+    clickableIcons: false
   });
 
   infoWindow = new google.maps.InfoWindow();
 
-  // 给每个餐厅放标记
-  PLACES.forEach(p => {
+  // 给每个餐厅放标记 - 用醒目的图钉样式
+  PLACES.forEach((p, idx) => {
     const marker = new google.maps.Marker({
       position: { lat: p.lat, lng: p.lng },
       map: gmap,
       title: p.name,
+      label: { text: String(idx + 1), color: '#fff', fontSize: '11px', fontWeight: '700' },
       icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 9,
+        path: 'M12 0C7.03 0 3 4.03 3 9c0 6.75 9 15 9 15s9-8.25 9-15c0-4.97-4.03-9-9-9z',
         fillColor: '#e74c3c',
-        fillOpacity: 0.9,
-        strokeColor: '#fff',
-        strokeWeight: 2
+        fillOpacity: 1,
+        strokeColor: '#b91c1c',
+        strokeWeight: 1,
+        scale: 1.8,
+        anchor: new google.maps.Point(12, 24),
+        labelOrigin: new google.maps.Point(12, 9)
       }
     });
     marker.addListener('click', () => {
@@ -182,6 +196,18 @@ function initMap() {
   PLACES.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
   gmap.fitBounds(bounds, 50);
 
+  // 地图样式切换按钮
+  const styleBtn = document.createElement('button');
+  styleBtn.id = 'mapStyleBtn';
+  styleBtn.textContent = '简洁地图';
+  styleBtn.style.cssText = 'position:absolute;right:14px;bottom:30px;z-index:1000;padding:8px 14px;background:#fff;border:1px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);';
+  document.querySelector('.map-area').appendChild(styleBtn);
+  styleBtn.addEventListener('click', () => {
+    useSimpleMap = !useSimpleMap;
+    gmap.setOptions({ styles: useSimpleMap ? SIMPLE_STYLE : [] });
+    styleBtn.textContent = useSimpleMap ? '标准地图' : '简洁地图';
+  });
+
   // 尝试定位
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(pos => {
@@ -193,12 +219,13 @@ function initMap() {
         title: '我的位置',
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
+          scale: 10,
           fillColor: '#4285f4',
           fillOpacity: 1,
           strokeColor: '#fff',
           strokeWeight: 3
-        }
+        },
+        zIndex: 1000
       });
       renderList();
     }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
@@ -218,13 +245,33 @@ function showInfo(p, marker) {
 }
 
 function highlightMarker(id) {
-  PLACES.forEach(p => {
+  PLACES.forEach((p, idx) => {
     const m = gmarkers[p.id];
     if (p.id === id) {
-      m.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: '#4285f4', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 });
+      m.setIcon({
+        path: 'M12 0C7.03 0 3 4.03 3 9c0 6.75 9 15 9 15s9-8.25 9-15c0-4.97-4.03-9-9-9z',
+        fillColor: '#4285f4',
+        fillOpacity: 1,
+        strokeColor: '#1d4ed8',
+        strokeWeight: 1.5,
+        scale: 2.2,
+        anchor: new google.maps.Point(12, 24),
+        labelOrigin: new google.maps.Point(12, 9)
+      });
+      m.setLabel({ text: String(idx + 1), color: '#fff', fontSize: '12px', fontWeight: '700' });
       m.setZIndex(999);
     } else {
-      m.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#e74c3c', fillOpacity: 0.9, strokeColor: '#fff', strokeWeight: 2 });
+      m.setIcon({
+        path: 'M12 0C7.03 0 3 4.03 3 9c0 6.75 9 15 9 15s9-8.25 9-15c0-4.97-4.03-9-9-9z',
+        fillColor: '#e74c3c',
+        fillOpacity: 1,
+        strokeColor: '#b91c1c',
+        strokeWeight: 1,
+        scale: 1.8,
+        anchor: new google.maps.Point(12, 24),
+        labelOrigin: new google.maps.Point(12, 9)
+      });
+      m.setLabel({ text: String(idx + 1), color: '#fff', fontSize: '11px', fontWeight: '700' });
       m.setZIndex(1);
     }
   });
@@ -320,8 +367,16 @@ function formatDist(km) {
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
 
-<!-- Google Maps API - 你需要替换成自己的 API Key -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQfnrSZ-a8j5alavgI_i1qkLWFfX3A9mM&callback=initMap"></script>
+<!-- Google Maps API -->
+<script>
+(function() {
+  var s = document.createElement('script');
+  s.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCQfnrSZ-a8j5alavgI_i1qkLWFfX3A9mM&callback=initMap&region=MY&language=zh-CN';
+  s.async = true;
+  s.defer = true;
+  document.head.appendChild(s);
+})();
+</script>
 
 </body>
 </html>
