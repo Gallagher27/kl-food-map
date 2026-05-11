@@ -97,6 +97,18 @@
     }
     .map-style-btn:hover { background: #fff5e6; transform: translateY(-1px); }
 
+    /* 导入按钮 */
+    .import-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .import-btn {
+      padding: 6px 14px; background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      color: #fff; border: none; border-radius: 20px; font-size: 12px;
+      font-weight: 700; cursor: pointer; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(255,107,26,0.25);
+      transition: all 0.15s;
+    }
+    .import-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,26,0.35); }
+    .import-hint { font-size: 11px; color: #aaa; }
+
     @media (max-width: 600px) {
       .app { flex-direction: column-reverse; }
       .panel { width: 100%; min-width: 100%; height: 45vh; border-right: none; border-top: 2px solid #ffe4c9; }
@@ -122,6 +134,11 @@
           <option value="rating">⭐ 评分最高</option>
           <option value="name">🔤 按名称</option>
         </select>
+      </div>
+      <div class="import-row">
+        <button class="import-btn" id="importBtn">📂 导入收藏</button>
+        <span class="import-hint" id="importHint">支持 GeoJSON / JSON / CSV</span>
+        <input type="file" id="fileInput" accept=".json,.geojson,.csv" style="display:none" />
       </div>
     </div>
     <div class="panel-list" id="list"></div>
@@ -241,9 +258,9 @@ function initMap() {
         map: gmap,
         title: '我在这里',
         icon: {
-          url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#4285f4" opacity="0.15"/><circle cx="24" cy="24" r="14" fill="#4285f4" opacity="0.3"/><circle cx="24" cy="24" r="8" fill="#fff" stroke="#4285f4" stroke-width="2"/><text x="24" y="29" text-anchor="middle" font-size="14">🧑</text></svg>`),
-          scaledSize: new google.maps.Size(48, 48),
-          anchor: new google.maps.Point(24, 24)
+          url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72"><circle cx="36" cy="36" r="34" fill="#4285f4" opacity="0.12"/><circle cx="36" cy="36" r="24" fill="#4285f4" opacity="0.2"/><circle cx="36" cy="36" r="14" fill="#fff" stroke="#4285f4" stroke-width="3"/><text x="36" y="42" text-anchor="middle" font-size="20">🧑</text></svg>`),
+          scaledSize: new google.maps.Size(72, 72),
+          anchor: new google.maps.Point(36, 36)
         },
         zIndex: 1000
       });
@@ -375,6 +392,164 @@ function formatDist(km) {
   return km < 1 ? Math.round(km*1000)+' m' : km.toFixed(1)+' km';
 }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== 导入功能 =====
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', handleImport);
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const text = ev.target.result;
+      let imported;
+      if (file.name.endsWith('.csv')) {
+        imported = parseCsv(text);
+      } else {
+        const json = JSON.parse(text);
+        imported = parseJson(json);
+      }
+      if (!imported.length) {
+        alert('没有找到有效地点数据。请确保文件包含名称和坐标信息。');
+        return;
+      }
+      // 合并到现有列表（去重按坐标）
+      const existing = new Set(PLACES.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`));
+      let added = 0;
+      imported.forEach(p => {
+        const key = `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
+        if (!existing.has(key)) {
+          PLACES.push(p);
+          existing.add(key);
+          added++;
+          // 在地图上加标记
+          addMarkerForPlace(p);
+        }
+      });
+      // 更新菜系筛选
+      updateCatFilter();
+      renderList();
+      // 适配地图到所有点
+      const bounds = new google.maps.LatLngBounds();
+      PLACES.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+      gmap.fitBounds(bounds, 50);
+      document.getElementById('importHint').textContent = `✅ 导入了 ${added} 个新地点`;
+      setTimeout(() => { document.getElementById('importHint').textContent = '支持 GeoJSON / JSON / CSV'; }, 4000);
+    } catch (err) {
+      alert('文件解析失败: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function addMarkerForPlace(p) {
+  const marker = new google.maps.Marker({
+    position: { lat: p.lat, lng: p.lng },
+    map: gmap,
+    title: p.name,
+    icon: {
+      url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44"><defs><filter id="s" x="-20%" y="-10%" width="140%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/></filter></defs><path d="M18 0C10 0 4 6 4 13.5c0 10 14 23.5 14 23.5s14-13.5 14-23.5C32 6 26 0 18 0z" fill="#ff6b35" filter="url(#s)"/><circle cx="18" cy="13.5" r="8" fill="#fff"/><text x="18" y="17.5" text-anchor="middle" font-size="12">🍴</text></svg>`),
+      scaledSize: new google.maps.Size(36, 44),
+      anchor: new google.maps.Point(18, 44)
+    }
+  });
+  marker.addListener('click', () => {
+    selectedId = p.id;
+    renderList();
+    showInfo(p, marker);
+    setTimeout(() => {
+      const el = document.querySelector(`.item[data-id="${p.id}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  });
+  gmarkers[p.id] = marker;
+}
+
+function updateCatFilter() {
+  const select = document.getElementById('catFilter');
+  const current = select.value;
+  const allCats = [...new Set(PLACES.map(p => p.category).filter(Boolean))].sort();
+  select.innerHTML = '<option value="">🍽️ 全部菜系</option>' + allCats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if (current && allCats.includes(current)) select.value = current;
+}
+
+// 解析 JSON（支持 GeoJSON、Google Takeout、普通数组）
+function parseJson(json) {
+  // GeoJSON FeatureCollection（Google Takeout 格式）
+  if (json.type === 'FeatureCollection' && Array.isArray(json.features)) {
+    return json.features.map(f => {
+      const coords = f.geometry && f.geometry.coordinates; // [lng, lat]
+      if (!coords || coords.length < 2) return null;
+      const props = f.properties || {};
+      const name = props.name || props.Title || props.title || '未命名';
+      return {
+        id: slugify(name) || 'place-' + Math.random().toString(36).slice(2, 8),
+        name: name,
+        area: props.address || props.area || props.location || '',
+        category: props.category || props.type || '餐厅',
+        price: props.price || '',
+        rating: parseFloat(props.rating || props.googleRating) || null,
+        lat: coords[1],
+        lng: coords[0],
+        url: props.url || props.google_maps_url || ''
+      };
+    }).filter(p => p && isFinite(p.lat) && isFinite(p.lng));
+  }
+
+  // 普通数组
+  const arr = Array.isArray(json) ? json : (json.places || json.data || json.items || []);
+  return arr.map(item => {
+    const lat = parseFloat(item.lat || item.latitude || (item.geometry && item.geometry.location && item.geometry.location.lat));
+    const lng = parseFloat(item.lng || item.lon || item.longitude || (item.geometry && item.geometry.location && item.geometry.location.lng));
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    const name = item.name || item.title || item.Title || '未命名';
+    return {
+      id: item.id || slugify(name) || 'place-' + Math.random().toString(36).slice(2, 8),
+      name: name,
+      area: item.area || item.address || item.neighborhood || item.district || '',
+      category: item.category || item.cuisine || item.type || '餐厅',
+      price: item.price || item.priceLevel || '',
+      rating: parseFloat(item.rating || item.googleRating) || null,
+      lat: lat,
+      lng: lng,
+      url: item.url || item.googleMapsUrl || item.mapsUrl || ''
+    };
+  }).filter(Boolean);
+}
+
+// 解析 CSV
+function parseCsv(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+    const lat = parseFloat(obj.lat || obj.latitude);
+    const lng = parseFloat(obj.lng || obj.lon || obj.longitude);
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    const name = obj.name || obj.title || '未命名';
+    return {
+      id: slugify(name) || 'place-' + Math.random().toString(36).slice(2, 8),
+      name: name,
+      area: obj.area || obj.address || '',
+      category: obj.category || obj.type || '餐厅',
+      price: obj.price || '',
+      rating: parseFloat(obj.rating) || null,
+      lat: lat,
+      lng: lng,
+      url: obj.url || ''
+    };
+  }).filter(Boolean);
+}
+
+function slugify(s) {
+  return String(s||'').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+}
 </script>
 
 <!-- Google Maps API -->
