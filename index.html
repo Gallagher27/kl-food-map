@@ -375,18 +375,11 @@
     #map {
       height: 100%;
       width: 100%;
-      background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.24) 1px, transparent 1px),
-        linear-gradient(rgba(255, 255, 255, 0.24) 1px, transparent 1px),
-        #e9e0cd;
-      background-size: 80px 80px;
+      background: #dbe7df;
     }
 
     .leaflet-container {
-      background:
-        radial-gradient(circle at 68% 24%, rgba(15, 118, 110, 0.08), transparent 24%),
-        radial-gradient(circle at 36% 62%, rgba(201, 68, 47, 0.07), transparent 23%),
-        #e9e0cd;
+      background: #dbe7df;
     }
 
     .map-badge {
@@ -637,7 +630,7 @@
         <span id="statusText">点击定位显示实时位置</span>
       </div>
       <div class="legend">
-        <div>轻量主干道简图，不加载外部底图瓦片，地点数据可从 JSON 或 CSV 导入。</div>
+        <div>使用公开地图底图，叠加 eat 收藏餐厅、距离和个人备注。</div>
         <div class="legend-row"><span class="road-key"></span><span>主干道</span></div>
         <div class="legend-row"><span class="food-key"></span><span>美食点</span></div>
         <div class="legend-row"><span class="you-key"></span><span>我的位置</span></div>
@@ -888,10 +881,17 @@
     const map = L.map("map", {
       zoomControl: false,
       preferCanvas: true,
-      attributionControl: false
+      attributionControl: true
     }).setView(DEFAULT_CENTER, 13);
 
     L.control.zoom({ position: "bottomleft" }).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 2,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
 
     const roadsLayer = L.layerGroup().addTo(map);
     const markerLayer = L.layerGroup().addTo(map);
