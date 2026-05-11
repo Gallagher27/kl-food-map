@@ -2,1460 +2,326 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>吉隆坡美食地图</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIINfQxYxELd4rPwhCAaxwVCdu6GZcEv2uQ="
-    crossorigin=""
-  />
   <style>
-    :root {
-      color-scheme: light;
-      --bg: #f7f5ef;
-      --panel: #fffdf8;
-      --ink: #1f2933;
-      --muted: #6b7280;
-      --line: #ded8cb;
-      --accent: #c9442f;
-      --accent-2: #0f766e;
-      --road: #d69122;
-      --shadow: 0 18px 50px rgba(30, 31, 35, 0.16);
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
 
-    * {
-      box-sizing: border-box;
-    }
+    .app { display: flex; height: 100%; }
 
-    html,
-    body {
+    /* 侧边栏 */
+    .panel {
+      width: 340px; min-width: 340px;
       height: 100%;
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background: var(--bg);
-    }
-
-    body {
-      overflow: hidden;
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-    }
-
-    button {
-      border: 0;
-      cursor: pointer;
-    }
-
-    .app {
-      position: relative;
-      height: 100%;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .sidebar {
-      position: absolute;
-      left: 16px;
-      top: 16px;
-      bottom: 16px;
-      width: min(390px, calc(100vw - 32px));
-      display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr) auto;
-      gap: 14px;
-      min-height: 0;
-      padding: 18px;
-      background: rgba(255, 253, 248, 0.58);
-      border: 1px solid rgba(222, 216, 203, 0.92);
-      border-radius: 8px;
-      box-shadow: none;
-      z-index: 650;
-    }
-
-    .sidebar.collapsed {
-      bottom: auto;
-      width: 58px;
-      height: 58px;
-      padding: 8px;
-      overflow: hidden;
-    }
-
-    .sidebar.collapsed > :not(.collapse-btn) {
-      display: none;
-    }
-
-    .collapse-btn {
-      position: absolute;
-      right: 10px;
-      top: 10px;
-      z-index: 2;
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
-      color: var(--ink);
-      background: rgba(255, 255, 255, 0.82);
-      border: 1px solid var(--line);
-    }
-
-    .brand {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      padding-right: 44px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 25px;
-      line-height: 1.15;
-      letter-spacing: 0;
-    }
-
-    .subline {
-      margin: 7px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .count {
-      flex: 0 0 auto;
-      min-width: 58px;
-      padding: 8px 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      text-align: center;
-      background: rgba(251, 250, 246, 0.9);
-    }
-
-    .count strong {
-      display: block;
-      font-size: 20px;
-      line-height: 1;
-      color: var(--accent);
-    }
-
-    .count span {
-      display: block;
-      margin-top: 3px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .toolbar {
-      display: grid;
-      gap: 10px;
-    }
-
-    .search-row,
-    .filter-row,
-    .action-row {
-      display: grid;
-      gap: 8px;
-    }
-
-    .search-row {
-      grid-template-columns: minmax(0, 1fr) 44px;
-    }
-
-    .filter-row {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
-
-    .action-row {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .field,
-    .select {
-      width: 100%;
-      height: 42px;
-      padding: 0 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--ink);
       background: #fff;
-      outline: none;
+      border-right: 1px solid #e5e5e5;
+      display: flex; flex-direction: column;
+      transition: margin-left 0.25s ease;
+      position: relative; z-index: 10;
+    }
+    .panel.collapsed { margin-left: -296px; }
+
+    .panel-header {
+      padding: 16px; border-bottom: 1px solid #eee; flex-shrink: 0;
+    }
+    .panel-header h1 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .panel-header input {
+      width: 100%; height: 36px; border: 1px solid #ddd; border-radius: 8px;
+      padding: 0 12px; font-size: 13px; outline: none;
+    }
+    .panel-header input:focus { border-color: #4285f4; box-shadow: 0 0 0 2px rgba(66,133,244,0.15); }
+    .filters { display: flex; gap: 8px; margin-top: 8px; }
+    .filters select {
+      flex: 1; height: 32px; border: 1px solid #ddd; border-radius: 6px;
+      font-size: 12px; padding: 0 8px; background: #fff;
     }
 
-    .field:focus,
-    .select:focus,
-    textarea:focus {
-      border-color: rgba(201, 68, 47, 0.75);
-      box-shadow: 0 0 0 3px rgba(201, 68, 47, 0.12);
+    .panel-list { flex: 1; overflow-y: auto; }
+
+    .item {
+      padding: 12px 16px; cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.1s;
     }
+    .item:hover { background: #f8f9fa; }
+    .item.active { background: #e8f0fe; border-left: 3px solid #4285f4; }
+    .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .item-name { font-size: 14px; font-weight: 600; line-height: 1.3; color: #1a1a1a; }
+    .item-dist { font-size: 12px; color: #0d9488; font-weight: 700; white-space: nowrap; }
+    .item-meta { font-size: 12px; color: #666; margin-top: 4px; }
 
-    .icon-btn,
-    .text-btn {
-      height: 42px;
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: #fff;
-      background: var(--accent);
-      white-space: nowrap;
+    /* 点击展开的详情 */
+    .item-detail {
+      display: none; margin-top: 8px; padding-top: 8px;
+      border-top: 1px solid #eee; font-size: 12px; color: #444;
     }
-
-    .text-btn.secondary,
-    .icon-btn.secondary {
-      color: var(--ink);
-      background: #efebe2;
-      border: 1px solid var(--line);
+    .item.active .item-detail { display: block; }
+    .item-detail .d-row { margin-bottom: 4px; }
+    .item-detail .d-label { color: #999; display: inline-block; width: 45px; }
+    .item-detail a {
+      display: inline-block; margin-top: 6px; padding: 5px 12px;
+      background: #4285f4; color: #fff; border-radius: 6px;
+      text-decoration: none; font-size: 12px; font-weight: 600;
     }
+    .item-detail a:hover { background: #3367d6; }
 
-    .text-btn.ghost {
-      color: var(--accent-2);
-      background: transparent;
-      border: 1px solid rgba(15, 118, 110, 0.25);
+    /* 收缩按钮 */
+    .toggle-btn {
+      position: absolute; right: -28px; top: 50%;
+      transform: translateY(-50%);
+      width: 28px; height: 56px;
+      background: #fff; border: 1px solid #e5e5e5; border-left: none;
+      border-radius: 0 8px 8px 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #666; z-index: 11;
     }
+    .toggle-btn:hover { background: #f5f5f5; }
 
-    .icon {
-      width: 18px;
-      height: 18px;
-      stroke: currentColor;
-      stroke-width: 2;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
+    /* 地图区域 */
+    .map-area { flex: 1; position: relative; }
+    #gmap { width: 100%; height: 100%; }
 
-    .places {
-      min-height: 0;
-      overflow: auto;
-      padding-right: 3px;
-    }
-
-    .place-card {
-      width: 100%;
-      margin: 0 0 10px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.88);
-      text-align: left;
-      transition: border-color 0.12s ease;
-    }
-
-    .place-card:hover,
-    .place-card.active {
-      border-color: rgba(201, 68, 47, 0.65);
-      box-shadow: none;
-    }
-
-    .place-title {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .place-title strong {
-      font-size: 15px;
-      line-height: 1.3;
-    }
-
-    .distance {
-      flex: 0 0 auto;
-      color: var(--accent-2);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 7px;
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 24px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #f1efe8;
-      color: #4b5563;
-    }
-
-    .stars {
-      display: inline-flex;
-      align-items: center;
-      gap: 1px;
-    }
-
-    .star {
-      width: 26px;
-      height: 26px;
-      display: inline-grid;
-      place-items: center;
-      border-radius: 6px;
-      color: #c5bca8;
-      background: transparent;
-      line-height: 1;
-    }
-
-    .star.filled {
-      color: #d49a17;
-    }
-
-    .details {
-      border-top: 1px solid var(--line);
-      padding-top: 10px;
-      max-height: 188px;
-      min-height: 0;
-      overflow: auto;
-    }
-
-    .empty-detail {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
-    }
-
-    .detail-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .detail-head h2 {
-      margin: 0;
-      font-size: 15px;
-      line-height: 1.2;
-      letter-spacing: 0;
-    }
-
-    .detail-actions {
-      display: flex;
-      gap: 8px;
-      flex: 0 0 auto;
-    }
-
-    .small-btn {
-      min-width: 38px;
-      height: 34px;
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--ink);
-      background: #efebe2;
-      border: 1px solid var(--line);
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin: 8px 0;
-    }
-
-    .metric {
-      padding: 9px 10px;
-      border-radius: 8px;
-      background: #f8f6f0;
-      min-width: 0;
-    }
-
-    .metric span {
-      display: block;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.2;
-    }
-
-    .metric strong {
-      display: block;
-      margin-top: 4px;
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .note-area {
-      width: 100%;
-      min-height: 42px;
-      max-height: 68px;
-      resize: vertical;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--ink);
-      outline: none;
-    }
-
-    .map-wrap {
-      position: absolute;
-      inset: 0;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    #map {
-      height: 100%;
-      width: 100%;
-      background: #dbe7df;
-    }
-
-    .leaflet-container {
-      background: #dbe7df;
-    }
-
-    .map-badge {
-      position: absolute;
-      right: 18px;
-      top: 18px;
-      z-index: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      color: var(--ink);
-      background: rgba(255, 253, 248, 0.92);
-      border: 1px solid rgba(222, 216, 203, 0.9);
-      box-shadow: 0 12px 28px rgba(31, 41, 51, 0.12);
-      backdrop-filter: blur(12px);
-      font-size: 13px;
-    }
-
-    .public-link {
-      top: 72px;
-      color: var(--accent-2);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    .legend {
-      position: absolute;
-      right: 18px;
-      bottom: 18px;
-      z-index: 500;
-      width: min(310px, calc(100% - 36px));
-      padding: 11px 12px;
-      border-radius: 8px;
-      background: rgba(255, 253, 248, 0.94);
-      border: 1px solid rgba(222, 216, 203, 0.9);
-      box-shadow: 0 12px 28px rgba(31, 41, 51, 0.12);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .legend-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 7px;
-      color: var(--ink);
-    }
-
-    .road-key,
-    .food-key,
-    .you-key {
-      display: inline-block;
-      flex: 0 0 auto;
-    }
-
-    .road-key {
-      width: 28px;
-      height: 4px;
-      border-radius: 999px;
-      background: var(--road);
-    }
-
-    .food-key {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: 2px solid #fff;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
-    }
-
-    .you-key {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #2563eb;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
-    }
-
-    .user-marker {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #2563eb;
-      border: 3px solid #fff;
-      box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.18), 0 8px 18px rgba(31, 41, 51, 0.24);
-    }
-
-    .locating {
-      background: var(--accent-2);
-    }
-
-    .road-label {
-      padding: 2px 6px;
-      border-radius: 999px;
-      color: #7c4b00;
-      background: rgba(255, 253, 248, 0.82);
-      border: 1px solid rgba(214, 145, 34, 0.32);
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      box-shadow: 0 5px 12px rgba(31, 41, 51, 0.08);
-    }
-
-    .leaflet-popup-content-wrapper {
-      border-radius: 8px;
-    }
-
-    .popup-title {
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-
-    .popup-meta {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    @media (max-width: 900px) {
-      body {
-        overflow: hidden;
-      }
-
-      .app {
-        height: 100%;
-        min-height: 0;
-      }
-
-      .map-wrap {
-        min-height: 0;
-      }
-
-      .sidebar {
-        left: 12px;
-        right: 12px;
-        top: auto;
-        bottom: 12px;
-        width: auto;
-        height: 45vh;
-        min-height: 360px;
-      }
-
-      .map-badge {
-        left: 12px;
-        right: 12px;
-        top: 12px;
-      }
-
-      .public-link {
-        top: 64px;
-      }
-
-      .legend {
-        display: none;
-      }
-    }
-
-    @media (max-width: 520px) {
-      .sidebar {
-        padding: 14px;
-      }
-
-      .brand {
-        display: block;
-      }
-
-      .count {
-        display: none;
-      }
-
-      .filter-row,
-      .action-row,
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-
-      h1 {
-        font-size: 22px;
-      }
+    @media (max-width: 600px) {
+      .app { flex-direction: column-reverse; }
+      .panel { width: 100%; min-width: 100%; height: 45vh; border-right: none; border-top: 1px solid #e5e5e5; }
+      .panel.collapsed { margin-left: 0; margin-bottom: -35vh; }
+      .toggle-btn { display: none; }
+      .map-area { height: 55vh; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <button class="collapse-btn" id="collapseBtn" title="收起侧边栏">‹</button>
-      <header class="brand">
-        <div>
-          <h1>吉隆坡美食地图</h1>
-          <p class="subline">市区简图、收藏餐厅、距离、星级和备注。</p>
-        </div>
-        <div class="count" aria-label="餐厅数量">
-          <strong id="placeCount">0</strong>
-          <span>地点</span>
-        </div>
-      </header>
 
-      <section class="toolbar" aria-label="地图工具">
-        <div class="search-row">
-          <input class="field" id="searchInput" type="search" placeholder="搜索餐厅、区域、菜系" />
-          <button class="icon-btn" id="locateBtn" title="开启实时定位">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/></svg>
-          </button>
-        </div>
-        <div class="filter-row">
-          <select class="select" id="categoryFilter" aria-label="菜系筛选"></select>
-          <select class="select" id="sortSelect" aria-label="排序">
-            <option value="nearest">离我最近</option>
-            <option value="rating">Google 评分</option>
-            <option value="mine">我的星级</option>
-            <option value="name">名称</option>
-          </select>
-        </div>
-        <div class="action-row">
-          <button class="text-btn secondary" id="importBtn">导入</button>
-          <button class="text-btn secondary" id="exportBtn">导出</button>
-          <button class="text-btn ghost" id="resetBtn">重置</button>
-          <input class="hidden" id="fileInput" type="file" accept=".json,.csv,application/json,text/csv" />
-        </div>
-      </section>
-
-      <main class="places" id="placesList" aria-label="美食列表"></main>
-
-      <section class="details" id="detailsPanel" aria-label="地点详情">
-        <div class="empty-detail">选择一个地点后，可记录你的 1-5 星评价和备注。定位开启后，会按当前位置计算大致直线距离。</div>
-      </section>
-    </aside>
-
-    <section class="map-wrap">
-      <div id="map" aria-label="吉隆坡地图"></div>
-      <div class="map-badge" id="statusBadge">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span id="statusText">点击定位显示实时位置</span>
+<div class="app">
+  <div class="panel" id="panel">
+    <button class="toggle-btn" id="toggleBtn">‹</button>
+    <div class="panel-header">
+      <h1>🍜 吉隆坡美食地图</h1>
+      <input id="search" type="search" placeholder="搜索餐厅、区域、菜系..." />
+      <div class="filters">
+        <select id="catFilter"><option value="">全部菜系</option></select>
+        <select id="sortBy">
+          <option value="nearest">离我最近</option>
+          <option value="rating">评分最高</option>
+          <option value="name">按名称</option>
+        </select>
       </div>
-      <a class="map-badge public-link" href="https://gallagher27.github.io/kl-food-map/" target="_blank" rel="noopener">打开公网定位版</a>
-      <div class="legend">
-        <div>使用公开地图底图，叠加 eat 收藏餐厅、距离和个人备注。</div>
-        <div class="legend-row"><span class="road-key"></span><span>主干道</span></div>
-        <div class="legend-row"><span class="food-key"></span><span>美食点</span></div>
-        <div class="legend-row"><span class="you-key"></span><span>我的位置</span></div>
-      </div>
-    </section>
+    </div>
+    <div class="panel-list" id="list"></div>
   </div>
+  <div class="map-area">
+    <div id="gmap"></div>
+  </div>
+</div>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-  <script>
-    const STORAGE_KEY = "kl-food-map-v2";
-    const NOTES_KEY = "kl-food-map-notes-v1";
-    const DEFAULT_CENTER = [3.1457, 101.7006];
+<script>
+// ===== 餐厅数据 =====
+const PLACES = [
+  { id:"hong-kee-claypot", name:"Hong Kee claypot chicken rice", area:"Chinatown", category:"广东风味", price:"RM 20-40", rating:3.8, lat:3.1442773, lng:101.6987981 },
+  { id:"shi-tian-claypot", name:"食添瓦煲鸡饭店", area:"Petaling Jaya", category:"鸡肉", price:"RM 1-20", rating:3.8, lat:3.06728, lng:101.6497283 },
+  { id:"shi-yue-tian-claypot", name:"食越添瓦煲鸡饭", area:"Petaling Jaya", category:"鸡肉", price:"RM 1-20", rating:4.0, lat:3.0576996, lng:101.6376537 },
+  { id:"new-ipoh-chicken-rice", name:"1977 New Ipoh Chicken Rice HQ", area:"Petaling Jaya", category:"中国风味", price:"RM 20-40", rating:3.9, lat:3.1068394, lng:101.6534213 },
+  { id:"hai-bin-seafood", name:"海滨海鲜楼", area:"Petaling Jaya", category:"蟹类菜品", price:"RM 40-140", rating:4.1, lat:3.098136, lng:101.6756964 },
+  { id:"heng-kee-bak-kut-teh", name:"興記肉骨茶", area:"Kepong", category:"中国风味", price:"RM 20-40", rating:4.1, lat:3.2139058, lng:101.6374145 },
+  { id:"icc-pudu", name:"ICC Pudu", area:"Pudu", category:"小贩中心", price:"RM 1-20", rating:4.0, lat:3.1380809, lng:101.7143347 },
+  { id:"nz-curry-house", name:"NZ咖喱屋", area:"KLCC", category:"印度穆斯林餐厅", price:"RM 1-20", rating:3.9, lat:3.1593572, lng:101.7096594 },
+  { id:"burgerboss", name:"BurgerBoss", area:"Bukit Bintang", category:"小贩档口", price:"RM 1-20", rating:4.6, lat:3.1446405, lng:101.7071322 },
+  { id:"friend-fries", name:"Friend Fries", area:"Bukit Bintang", category:"快餐", price:"RM 1-20", rating:4.8, lat:3.1474438, lng:101.7119593 },
+  { id:"naughty-babe-dirty-duck", name:"Naughty Babe Dirty Duck", area:"Desa Sri Hartamas", category:"烧烤", price:"RM 40-120", rating:4.1, lat:3.162473, lng:101.649636 },
+  { id:"craf-roasters-bbq", name:"Craf Roasters BBQ", area:"Kuala Lumpur", category:"烧烤", price:"RM 20-100", rating:4.6, lat:3.1852169, lng:101.6866302 },
+  { id:"borenos-fried-chicken", name:"Borenos Fried Chicken", area:"Damansara Uptown", category:"快餐", price:"RM 20-40", rating:4.6, lat:3.1373968, lng:101.6233797 },
+  { id:"al-amin-xinjiang", name:"Al-Amin 新疆风味餐厅", area:"Petaling Jaya", category:"清真风味", price:"RM 20-40", rating:4.2, lat:3.118503, lng:101.6287869 },
+  { id:"mamas-bun-stewed-fish", name:"咱妈烀饼 Mama's Bun", area:"Petaling Jaya", category:"餐馆", price:"RM 40-60", rating:4.7, lat:3.1145863, lng:101.6107796 }
+];
 
-    const samplePlaces = [
-      {
-        id: "hong-kee-claypot",
-        name: "Hong Kee claypot chicken rice",
-        area: "Chinatown",
-        category: "广东风味",
-        price: "RM 20-40",
-        googleRating: 3.8,
-        lat: 3.1442773,
-        lng: 101.6987981,
-        tags: ["瓦煲鸡饭", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/Hong+Kee+claypot+chicken+rice/@3.1579884,101.4751716,11.1z/data=!3m1!5s0x31cc49d103a35b5d:0x55797b42d951024a!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc49d103f9183d:0xbc237cf72d16a85f!8m2!3d3.1442773!4d101.6987981!16s%2Fg%2F11c3kcm63h?entry=ttu"
-      },
-      {
-        id: "shi-tian-claypot",
-        name: "食添瓦煲鸡饭店",
-        area: "Petaling Jaya",
-        category: "鸡肉",
-        price: "RM 1-20",
-        googleRating: 3.8,
-        lat: 3.06728,
-        lng: 101.6497283,
-        tags: ["瓦煲鸡饭", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/%E9%A3%9F%E6%B7%BB%E7%93%A6%E7%85%B2%E9%B8%A1%E9%A5%AD%E5%BA%97/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc4b0f5ee2c215:0xe9e0b83dff4ecf15!8m2!3d3.06728!4d101.6497283!16s%2Fg%2F1v5fpdg_?entry=ttu"
-      },
-      {
-        id: "shi-yue-tian-claypot",
-        name: "食越添瓦煲鸡饭",
-        area: "Petaling Jaya",
-        category: "鸡肉",
-        price: "RM 1-20",
-        googleRating: 4.0,
-        lat: 3.0576996,
-        lng: 101.6376537,
-        tags: ["瓦煲鸡饭", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/%E9%A3%9F%E8%B6%8A%E6%B7%BB%E7%93%A6%E7%85%B2%E9%B8%A1%E9%A5%AD/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc4b6b54968381:0xdb65f3072626ca02!8m2!3d3.0576996!4d101.6376537!16s%2Fg%2F11b7w5k_x3?entry=ttu"
-      },
-      {
-        id: "new-ipoh-chicken-rice",
-        name: "1977 New Ipoh Chicken Rice HQ @ PJ Jalan Gasing",
-        area: "Petaling Jaya",
-        category: "中国风味",
-        price: "RM 20-40",
-        googleRating: 3.9,
-        lat: 3.1068394,
-        lng: 101.6534213,
-        tags: ["鸡饭", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/1977+New+Ipoh+Chicken+Rice+HQ+@+PJ+Jalan+Gasing/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc4bd13c7be733:0x651df80823f07a54!8m2!3d3.1068394!4d101.6534213!16s%2Fg%2F1v_0g89j?entry=ttu"
-      },
-      {
-        id: "hai-bin-seafood",
-        name: "海滨海鲜楼",
-        area: "Petaling Jaya",
-        category: "蟹类菜品",
-        price: "RM 40-140",
-        googleRating: 4.1,
-        lat: 3.098136,
-        lng: 101.6756964,
-        tags: ["海鲜", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/%E6%B5%B7%E6%BB%A8%E6%B5%B7%E9%B2%9C%E6%A5%BC/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc4a3a2d60ad3b:0xc4fbe3d12ab78d5b!8m2!3d3.098136!4d101.6756964!16s%2Fg%2F1hc5yqfkx?entry=ttu"
-      },
-      {
-        id: "heng-kee-bak-kut-teh",
-        name: "興記肉骨茶",
-        area: "Kepong",
-        category: "中国风味",
-        price: "RM 20-40",
-        googleRating: 4.1,
-        lat: 3.2139058,
-        lng: 101.6374145,
-        tags: ["肉骨茶", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/%E8%88%88%E8%A8%98%E8%82%89%E9%AA%A8%E8%8C%B6/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc466a61ba4c79:0xb4fa2934babee426!8m2!3d3.2139058!4d101.6374145!16s%2Fg%2F1tcy1tfr?entry=ttu"
-      },
-      {
-        id: "icc-pudu",
-        name: "ICC Pudu",
-        area: "Pudu",
-        category: "小贩中心",
-        price: "RM 1-20",
-        googleRating: 4.0,
-        lat: 3.1380809,
-        lng: 101.7143347,
-        tags: ["小贩中心", "早餐", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/ICC+Pudu/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc36243c03ec4b:0xabc6c127472ea5a4!8m2!3d3.1380809!4d101.7143347!16s%2Fg%2F11bz_rg3yz?entry=ttu"
-      },
-      {
-        id: "nz-curry-house",
-        name: "NZ咖喱屋",
-        area: "KLCC",
-        category: "印度穆斯林餐厅",
-        price: "RM 1-20",
-        googleRating: 3.9,
-        lat: 3.1593572,
-        lng: 101.7096594,
-        tags: ["咖喱", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/NZ%E5%92%96%E5%96%B1%E5%B1%8B/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc49427d5ef1ad:0xe79abe351df5c13d!8m2!3d3.1593572!4d101.7096594!16s%2Fg%2F11h89hcwcz?entry=ttu"
-      },
-      {
-        id: "burgerboss",
-        name: "BurgerBoss",
-        area: "Bukit Bintang",
-        category: "小贩档口",
-        price: "RM 1-20",
-        googleRating: 4.6,
-        lat: 3.1446405,
-        lng: 101.7071322,
-        tags: ["汉堡", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/BurgerBoss/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc37c07c2f65a3:0xc4467099dcc43b8f!8m2!3d3.1446405!4d101.7071322!16s%2Fg%2F11qp9zjpq_?entry=ttu"
-      },
-      {
-        id: "friend-fries",
-        name: "Friend Fries",
-        area: "Bukit Bintang",
-        category: "快餐",
-        price: "RM 1-20",
-        googleRating: 4.8,
-        lat: 3.1474438,
-        lng: 101.7119593,
-        tags: ["薯条", "快餐", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/Friend+Fries/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc37a52dbd7789:0x164dfea728b92b4d!8m2!3d3.1474438!4d101.7119593!16s%2Fg%2F11k4jjscjc?entry=ttu"
-      },
-      {
-        id: "naughty-babe-dirty-duck",
-        name: "Naughty Babe Dirty Duck",
-        area: "Desa Sri Hartamas",
-        category: "烧烤",
-        price: "RM 40-120",
-        googleRating: 4.1,
-        lat: 3.162473,
-        lng: 101.649636,
-        tags: ["烧烤", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/Naughty+Babe+Dirty+Duck/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc48efe3069109:0x2e41c77d15b72101!8m2!3d3.162473!4d101.649636!16s%2Fg%2F1s049rgjs?entry=ttu"
-      },
-      {
-        id: "craf-roasters-bbq",
-        name: "Craf Roasters BBQ",
-        area: "Kuala Lumpur",
-        category: "烧烤",
-        price: "RM 20-100",
-        googleRating: 4.6,
-        lat: 3.1852169,
-        lng: 101.6866302,
-        tags: ["烧烤", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/Craf+Roasters+BBQ/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc49de7f1594f9:0xf380d132585aed7d!8m2!3d3.1852169!4d101.6866302!16s%2Fg%2F11j83rx4ch?entry=ttu"
-      },
-      {
-        id: "borenos-fried-chicken",
-        name: "Borenos Fried Chicken (Damansara Uptown)",
-        area: "Damansara Uptown",
-        category: "快餐",
-        price: "RM 20-40",
-        googleRating: 4.6,
-        lat: 3.1373968,
-        lng: 101.6233797,
-        tags: ["炸鸡", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/Borenos+Fried+Chicken+(Damansara+Uptown)/@3.1579884,101.4751716,11.1z/data=!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc491a29eedb71:0xd0d7265a16d16b07!8m2!3d3.1373968!4d101.6233797!16s%2Fg%2F11z2t8_5dv?entry=ttu"
-      },
-      {
-        id: "al-amin-xinjiang",
-        name: "Al-Amin Xinjiang Muslim Restaurant(中国新疆风味餐厅)",
-        area: "Petaling Jaya",
-        category: "清真风味",
-        price: "RM 20-40",
-        googleRating: 4.2,
-        lat: 3.118503,
-        lng: 101.6287869,
-        tags: ["新疆菜", "清真", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/Al-Amin+Xinjiang+Muslim+Restaurant(%E4%B8%AD%E5%9B%BD%E6%96%B0%E7%96%86%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85)/@3.118503,101.4763516,12z/data=!4m10!1m3!11m2!2sbVtTiixuFc3SduwBkMSCflmjrf90Bw!3e3!3m5!1s0x31cc495077673173:0xe0cd241356085c26!8m2!3d3.118503!4d101.6287869!16s%2Fg%2F1pzx97l26?entry=ttu"
-      },
-      {
-        id: "mamas-bun-stewed-fish",
-        name: "Mama's Bun and Stewed Fish Restaurant 咱妈烀饼",
-        area: "Petaling Jaya",
-        category: "餐馆",
-        price: "RM 40-60",
-        googleRating: 4.7,
-        lat: 3.1145863,
-        lng: 101.6107796,
-        tags: ["中餐", "收藏"],
-        googleMapsUrl: "https://www.google.com/maps/place/Mama's+Bun+and+Stewed+Fish+Restaurant+%E5%92%B1%E5%A6%88%E7%83%80%E9%A5%BC/@3.1145863,101.3256887,11z/data=!3m1!5s0x31cc4eaa24badb81:0x759dc6f583333f3b!4m10!1m3!11m2!2s0NcgRcWGo3FDRfggSB6gNFX2bwn4rQ!3e8!3m5!1s0x31cc4f1d3e9a142f:0xa001b213c4021c5f!8m2!3d3.1145863!4d101.6107796!16s%2Fg%2F11sskxdh1v?entry=ttu"
+let selectedId = null;
+let myLat = null, myLng = null;
+let gmap, gmarkers = {}, userMarker = null, infoWindow = null;
+
+// ===== Google Maps 初始化 =====
+function initMap() {
+  gmap = new google.maps.Map(document.getElementById('gmap'), {
+    center: { lat: 3.14, lng: 101.69 },
+    zoom: 12,
+    mapId: 'DEMO_MAP_ID',
+    disableDefaultUI: false,
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false
+  });
+
+  infoWindow = new google.maps.InfoWindow();
+
+  // 给每个餐厅放标记
+  PLACES.forEach(p => {
+    const marker = new google.maps.Marker({
+      position: { lat: p.lat, lng: p.lng },
+      map: gmap,
+      title: p.name,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 9,
+        fillColor: '#e74c3c',
+        fillOpacity: 0.9,
+        strokeColor: '#fff',
+        strokeWeight: 2
       }
-    ];
+    });
+    marker.addListener('click', () => {
+      selectedId = p.id;
+      renderList();
+      showInfo(p, marker);
+    });
+    gmarkers[p.id] = marker;
+  });
 
-    const majorRoads = [
-      {
-        name: "Jalan Tun Razak",
-        color: "#cf7f1a",
-        points: [[3.1810, 101.7141], [3.1652, 101.7170], [3.1540, 101.7174], [3.1400, 101.7181], [3.1283, 101.7201]]
-      },
-      {
-        name: "Jalan Ampang",
-        color: "#d69122",
-        points: [[3.1608, 101.6907], [3.1582, 101.7044], [3.1597, 101.7133], [3.1594, 101.7273]]
-      },
-      {
-        name: "Jalan Sultan Ismail",
-        color: "#d69122",
-        points: [[3.1548, 101.6960], [3.1525, 101.7041], [3.1487, 101.7117], [3.1450, 101.7194]]
-      },
-      {
-        name: "Jalan Bukit Bintang",
-        color: "#df9f31",
-        points: [[3.1461, 101.7055], [3.1468, 101.7094], [3.1476, 101.7134], [3.1491, 101.7173]]
-      },
-      {
-        name: "Jalan Pudu",
-        color: "#c96a1d",
-        points: [[3.1486, 101.7003], [3.1432, 101.7040], [3.1378, 101.7081], [3.1281, 101.7130]]
-      },
-      {
-        name: "Jalan Kuching",
-        color: "#c96a1d",
-        points: [[3.1787, 101.6838], [3.1660, 101.6897], [3.1548, 101.6946], [3.1475, 101.6969]]
-      },
-      {
-        name: "Jalan Syed Putra",
-        color: "#cf7f1a",
-        points: [[3.1517, 101.6912], [3.1438, 101.6902], [3.1327, 101.6884], [3.1195, 101.6874]]
-      }
-    ];
+  // 适配所有点
+  const bounds = new google.maps.LatLngBounds();
+  PLACES.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+  gmap.fitBounds(bounds, 50);
 
-    let places = loadPlaces();
-    let notes = loadNotes();
-    let selectedId = places[0]?.id || null;
-    let userLocation = null;
-    const markers = new Map();
-    let userMarker = null;
-    let isLocating = false;
-    let hasCenteredOnUser = false;
-
-    const map = L.map("map", {
-      zoomControl: false,
-      preferCanvas: true,
-      attributionControl: true,
-      zoomAnimation: false,
-      fadeAnimation: false,
-      markerZoomAnimation: false,
-      inertia: true
-    }).setView(DEFAULT_CENTER, 13);
-
-    L.control.zoom({ position: "bottomleft" }).addTo(map);
-    const baseLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
-      maxZoom: 19,
-      detectRetina: false,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 2,
-      attribution: "Tiles &copy; Esri"
-    }).addTo(map);
-
-    const roadsLayer = L.layerGroup().addTo(map);
-    const markerLayer = L.layerGroup().addTo(map);
-
-    drawRoads();
-    renderAll();
-    updateLocationPermissionStatus();
-    map.on("locationfound", updateUserLocation);
-    map.on("locationerror", handleLocationError);
-    setTimeout(() => {
-      map.invalidateSize();
-      focusInitialView();
-      baseLayer.redraw();
-    }, 350);
-    setTimeout(() => {
-      map.invalidateSize();
-      baseLayer.redraw();
-    }, 1200);
-    new ResizeObserver(() => map.invalidateSize()).observe(document.querySelector(".map-wrap"));
-
-    document.getElementById("searchInput").addEventListener("input", renderAll);
-    document.getElementById("categoryFilter").addEventListener("change", renderAll);
-    document.getElementById("sortSelect").addEventListener("change", renderAll);
-    document.getElementById("locateBtn").addEventListener("click", locateUser);
-    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("fileInput").click());
-    document.getElementById("fileInput").addEventListener("change", handleFileImport);
-    document.getElementById("exportBtn").addEventListener("click", exportData);
-    document.getElementById("resetBtn").addEventListener("click", resetSample);
-    document.getElementById("collapseBtn").addEventListener("click", toggleSidebar);
-
-    function loadPlaces() {
-      try {
-        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-        return Array.isArray(stored) && stored.length ? normalizePlaces(stored) : samplePlaces;
-      } catch {
-        return samplePlaces;
-      }
-    }
-
-    function loadNotes() {
-      try {
-        return JSON.parse(localStorage.getItem(NOTES_KEY) || "{}") || {};
-      } catch {
-        return {};
-      }
-    }
-
-    function savePlaces() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
-    }
-
-    function saveNotes() {
-      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-    }
-
-    function normalizePlaces(input) {
-      return input
-        .map((item, index) => {
-          const lat = Number(item.lat ?? item.latitude);
-          const lng = Number(item.lng ?? item.lon ?? item.longitude);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-          const name = String(item.name || item.title || `地点 ${index + 1}`).trim();
-          return {
-            id: String(item.id || slugify(name) || `place-${index + 1}`),
-            name,
-            area: String(item.area || item.neighborhood || item.district || "吉隆坡").trim(),
-            category: String(item.category || item.cuisine || item.type || "餐厅").trim(),
-            price: String(item.price || item.priceLevel || "").trim(),
-            googleRating: item.googleRating === "" || item.googleRating == null ? null : Number(item.googleRating),
-            lat,
-            lng,
-            tags: Array.isArray(item.tags) ? item.tags : String(item.tags || "").split(/[|,，、]/).map((tag) => tag.trim()).filter(Boolean),
-            googleMapsUrl: String(item.googleMapsUrl || item.url || item.mapsUrl || "").trim(),
-            placeId: String(item.placeId || "").trim()
-          };
-        })
-        .filter(Boolean);
-    }
-
-    function slugify(value) {
-      return value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "");
-    }
-
-    function toggleSidebar() {
-      const sidebar = document.querySelector(".sidebar");
-      const button = document.getElementById("collapseBtn");
-      const collapsed = sidebar.classList.toggle("collapsed");
-      button.textContent = collapsed ? "›" : "‹";
-      button.title = collapsed ? "展开侧边栏" : "收起侧边栏";
-      setTimeout(() => map.invalidateSize(), 120);
-    }
-
-    function drawRoads() {
-      roadsLayer.clearLayers();
-      majorRoads.forEach((road) => {
-        L.polyline(road.points, {
-          color: road.color,
-          weight: 5,
-          opacity: 0.88,
-          lineCap: "round",
-          lineJoin: "round"
-        }).addTo(roadsLayer);
-      });
-    }
-
-    function renderAll() {
-      renderCategoryOptions();
-      const visible = getVisiblePlaces();
-      renderMarkers(visible);
-      renderList(visible);
-      renderDetails();
-      document.getElementById("placeCount").textContent = String(visible.length);
-    }
-
-    function renderCategoryOptions() {
-      const select = document.getElementById("categoryFilter");
-      const current = select.value || "all";
-      const categories = [...new Set(places.map((place) => place.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh-CN"));
-      select.innerHTML = [
-        `<option value="all">全部菜系</option>`,
-        ...categories.map((category) => `<option value="${escapeAttr(category)}">${escapeHtml(category)}</option>`)
-      ].join("");
-      select.value = categories.includes(current) ? current : "all";
-    }
-
-    function getVisiblePlaces() {
-      const query = document.getElementById("searchInput").value.trim().toLowerCase();
-      const category = document.getElementById("categoryFilter").value;
-      const sort = document.getElementById("sortSelect").value;
-
-      const filtered = places.filter((place) => {
-        const text = [place.name, place.area, place.category, ...(place.tags || [])].join(" ").toLowerCase();
-        const matchesQuery = !query || text.includes(query);
-        const matchesCategory = category === "all" || place.category === category;
-        return matchesQuery && matchesCategory;
-      });
-
-      return filtered.sort((a, b) => {
-        if (sort === "rating") return Number(b.googleRating || 0) - Number(a.googleRating || 0);
-        if (sort === "mine") return Number(getMine(b.id).rating || 0) - Number(getMine(a.id).rating || 0);
-        if (sort === "name") return a.name.localeCompare(b.name, "zh-CN");
-        return getDistance(a) - getDistance(b);
-      });
-    }
-
-    function renderMarkers(visible) {
-      markerLayer.clearLayers();
-      markers.clear();
-      visible.forEach((place, index) => {
-        const selected = place.id === selectedId;
-        const marker = L.circleMarker([place.lat, place.lng], {
-          radius: selected ? 12 : 9,
-          color: "#ffffff",
-          weight: selected ? 4 : 3,
-          fillColor: selected ? "#0f766e" : "#c9442f",
-          fillOpacity: 0.95,
-          pane: "markerPane"
-        }).addTo(markerLayer);
-
-        marker.bindTooltip(`${index + 1}. ${place.name}`, {
-          direction: "top",
-          opacity: 0.92,
-          sticky: true
-        });
-        marker.on("click", () => selectPlace(place.id, true));
-        markers.set(place.id, marker);
-      });
-    }
-
-    function renderList(visible) {
-      const list = document.getElementById("placesList");
-      if (!visible.length) {
-        list.innerHTML = `<div class="empty-detail">没有匹配地点。</div>`;
-        return;
-      }
-
-      list.innerHTML = visible.map((place) => {
-        const mine = getMine(place.id);
-        const active = place.id === selectedId ? " active" : "";
-        return `
-          <button class="place-card${active}" data-id="${escapeAttr(place.id)}">
-            <div class="place-title">
-              <strong>${escapeHtml(place.name)}</strong>
-              <span class="distance">${formatDistance(getDistance(place))}</span>
-            </div>
-            <div class="meta">
-              <span class="pill">${escapeHtml(place.area)}</span>
-              <span class="pill">${escapeHtml(place.category)}</span>
-              <span>${formatRating(place.googleRating)}</span>
-              <span>${renderStars(mine.rating || 0, false)}</span>
-            </div>
-          </button>
-        `;
-      }).join("");
-
-      [...list.querySelectorAll(".place-card")].forEach((card) => {
-        card.addEventListener("click", () => selectPlace(card.dataset.id, true));
-      });
-    }
-
-    function renderDetails() {
-      const panel = document.getElementById("detailsPanel");
-      const place = places.find((item) => item.id === selectedId);
-      if (!place) {
-        panel.innerHTML = `<div class="empty-detail">选择一个地点后，可记录你的 1-5 星评价和备注。定位开启后，会按当前位置计算大致直线距离。</div>`;
-        return;
-      }
-
-      const mine = getMine(place.id);
-      panel.innerHTML = `
-        <div class="detail-head">
-          <div>
-            <h2>${escapeHtml(place.name)}</h2>
-            <div class="meta">
-              <span class="pill">${escapeHtml(place.area)}</span>
-              <span class="pill">${escapeHtml(place.category)}</span>
-              ${(place.tags || []).slice(0, 3).map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join("")}
-            </div>
-          </div>
-          <div class="detail-actions">
-            <button class="small-btn" id="focusBtn" title="回到地图">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            </button>
-            <button class="small-btn" id="mapsBtn" title="打开 Google Maps">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18c-2 0-4-2-4-4s2-4 4-4h3"/><path d="M14 10h3c2 0 4 2 4 4s-2 4-4 4h-3"/><path d="M9 14h6"/></svg>
-            </button>
-          </div>
-        </div>
-        <div class="detail-grid">
-          <div class="metric"><span>距离</span><strong>${formatDistance(getDistance(place))}</strong></div>
-          <div class="metric"><span>Google</span><strong>${formatRating(place.googleRating)}</strong></div>
-          <div class="metric"><span>价格</span><strong>${escapeHtml(place.price || "未填")}</strong></div>
-        </div>
-        <div class="meta" style="margin-bottom:8px;">
-          <span>我的星级</span>
-          <span class="stars interactive" id="ratingStars">${renderStars(mine.rating || 0, true)}</span>
-        </div>
-        <textarea class="note-area" id="noteInput" placeholder="吃完后的印象、推荐菜、避雷点、适合什么场景">${escapeHtml(mine.note || "")}</textarea>
-      `;
-
-      document.getElementById("focusBtn").addEventListener("click", () => selectPlace(place.id, true));
-      document.getElementById("mapsBtn").addEventListener("click", () => openGoogleMaps(place));
-      [...document.querySelectorAll("#ratingStars .star")].forEach((button) => {
-        button.addEventListener("click", () => {
-          setMine(place.id, { rating: Number(button.dataset.rating) });
-          renderAll();
-        });
-      });
-      document.getElementById("noteInput").addEventListener("input", (event) => {
-        setMine(place.id, { note: event.target.value });
-      });
-    }
-
-    function selectPlace(id, pan) {
-      selectedId = id;
-      const place = places.find((item) => item.id === id);
-      if (place && pan) {
-        map.panTo([place.lat, place.lng], { animate: false });
-      }
-      renderAll();
-    }
-
-    function locateUser() {
-      const status = document.getElementById("statusText");
-      const button = document.getElementById("locateBtn");
-      if (!window.isSecureContext) {
-        status.textContent = "定位需要 HTTPS，请打开公网版本";
-        return;
-      }
-      if (!navigator.geolocation) {
-        status.textContent = "当前浏览器不支持定位";
-        return;
-      }
-      if (isLocating) {
-        map.stopLocate();
-        isLocating = false;
-        button.classList.remove("locating");
-        status.textContent = userLocation ? "实时定位已暂停" : "点击定位显示实时位置";
-        return;
-      }
-      status.textContent = "正在请求定位权限";
-      button.classList.add("locating");
-      isLocating = true;
-      map.locate({
-        watch: true,
-        setView: false,
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 10000
-      });
-    }
-
-    async function updateLocationPermissionStatus() {
-      const status = document.getElementById("statusText");
-      if (!window.isSecureContext) {
-        status.textContent = "定位需要 HTTPS，请打开公网版本";
-        return;
-      }
-      if (!navigator.geolocation) {
-        status.textContent = "当前浏览器不支持定位";
-        return;
-      }
-      if (!navigator.permissions?.query) return;
-      try {
-        const permission = await navigator.permissions.query({ name: "geolocation" });
-        if (permission.state === "granted") {
-          status.textContent = "点击定位开启实时位置";
-        } else if (permission.state === "denied") {
-          status.textContent = "定位已被浏览器阻止";
-        } else {
-          status.textContent = "点击定位并允许位置权限";
+  // 尝试定位
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      myLat = pos.coords.latitude;
+      myLng = pos.coords.longitude;
+      userMarker = new google.maps.Marker({
+        position: { lat: myLat, lng: myLng },
+        map: gmap,
+        title: '我的位置',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#4285f4',
+          fillOpacity: 1,
+          strokeColor: '#fff',
+          strokeWeight: 3
         }
-        permission.onchange = () => updateLocationPermissionStatus();
-      } catch {
-        status.textContent = "点击定位显示实时位置";
-      }
-    }
+      });
+      renderList();
+    }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+  }
 
-    function handleLocationError(error) {
-      const status = document.getElementById("statusText");
-      const button = document.getElementById("locateBtn");
-      isLocating = false;
-      button.classList.remove("locating");
-      if (error.code === 1) {
-        status.textContent = "定位权限被拒绝，请在浏览器地址栏开启";
-      } else if (error.code === 2) {
-        status.textContent = "暂时无法获取当前位置";
-      } else {
-        status.textContent = "定位超时，请再试一次";
-      }
-    }
+  renderList();
+}
 
-    function updateUserLocation(event) {
-      const status = document.getElementById("statusText");
-      userLocation = {
-        lat: event.latlng.lat,
-        lng: event.latlng.lng,
-        accuracy: event.accuracy
-      };
-      if (!userMarker) {
-        userMarker = L.marker([userLocation.lat, userLocation.lng], {
-          icon: L.divIcon({
-            className: "",
-            html: `<div class="user-marker"></div>`,
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-          })
-        }).addTo(map).bindPopup("我的位置");
-      } else {
-        userMarker.setLatLng([userLocation.lat, userLocation.lng]);
-      }
-      status.textContent = `实时定位中 · 精度约 ${Math.round(userLocation.accuracy || 0)} m`;
-      if (!hasCenteredOnUser) {
-        map.setView([userLocation.lat, userLocation.lng], 14, { animate: false });
-        hasCenteredOnUser = true;
-      }
-      renderAll();
-    }
+function showInfo(p, marker) {
+  const d = formatDist(dist(p));
+  infoWindow.setContent(`<div style="font-size:13px;max-width:200px">
+    <b>${esc(p.name)}</b><br>
+    <span style="color:#666">${esc(p.area)} · ${esc(p.category)}</span><br>
+    <span style="color:#0d9488;font-weight:700">${d}</span> · ★${p.rating}
+  </div>`);
+  infoWindow.open(gmap, marker);
+}
 
-    function getMine(id) {
-      return notes[id] || {};
+function highlightMarker(id) {
+  PLACES.forEach(p => {
+    const m = gmarkers[p.id];
+    if (p.id === id) {
+      m.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 13, fillColor: '#4285f4', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 });
+      m.setZIndex(999);
+    } else {
+      m.setIcon({ path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#e74c3c', fillOpacity: 0.9, strokeColor: '#fff', strokeWeight: 2 });
+      m.setZIndex(1);
     }
+  });
+}
 
-    function setMine(id, patch) {
-      notes[id] = { ...getMine(id), ...patch };
-      saveNotes();
-    }
+// ===== 侧边栏逻辑 =====
+const panel = document.getElementById('panel');
+const toggleBtn = document.getElementById('toggleBtn');
+const searchInput = document.getElementById('search');
+const catFilter = document.getElementById('catFilter');
+const sortBy = document.getElementById('sortBy');
+const listEl = document.getElementById('list');
 
-    function getDistance(place) {
-      if (!userLocation) return Number.POSITIVE_INFINITY;
-      return haversine(userLocation.lat, userLocation.lng, place.lat, place.lng);
-    }
+// 填充菜系
+const cats = [...new Set(PLACES.map(p => p.category))].sort();
+cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catFilter.appendChild(o); });
 
-    function haversine(lat1, lng1, lat2, lng2) {
-      const earthKm = 6371;
-      const dLat = toRad(lat2 - lat1);
-      const dLng = toRad(lng2 - lng1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      return earthKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
+toggleBtn.addEventListener('click', () => {
+  panel.classList.toggle('collapsed');
+  toggleBtn.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+});
 
-    function toRad(value) {
-      return value * Math.PI / 180;
-    }
+searchInput.addEventListener('input', renderList);
+catFilter.addEventListener('change', renderList);
+sortBy.addEventListener('change', renderList);
 
-    function formatDistance(km) {
-      if (!Number.isFinite(km)) return "待定位";
-      if (km < 1) return `${Math.round(km * 1000)} m`;
-      return `${km.toFixed(km < 10 ? 1 : 0)} km`;
-    }
+function renderList() {
+  const q = searchInput.value.trim().toLowerCase();
+  const cat = catFilter.value;
+  const sort = sortBy.value;
 
-    function formatRating(value) {
-      const rating = Number(value);
-      return Number.isFinite(rating) ? `★ ${rating.toFixed(1)}` : "未评分";
-    }
+  let items = PLACES.filter(p => {
+    if (cat && p.category !== cat) return false;
+    if (q && !(p.name.toLowerCase().includes(q) || p.area.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))) return false;
+    return true;
+  });
 
-    function renderStars(value, interactive) {
-      const rating = Number(value || 0);
-      return Array.from({ length: 5 }, (_, index) => {
-        const score = index + 1;
-        const filled = score <= rating ? " filled" : "";
-        if (interactive) {
-          return `<button class="star${filled}" data-rating="${score}" title="${score} 星">★</button>`;
+  if (sort === 'nearest') items.sort((a, b) => dist(a) - dist(b));
+  else if (sort === 'rating') items.sort((a, b) => (b.rating||0) - (a.rating||0));
+  else items.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+
+  listEl.innerHTML = items.map(p => {
+    const active = p.id === selectedId ? ' active' : '';
+    const d = formatDist(dist(p));
+    return `<div class="item${active}" data-id="${p.id}">
+      <div class="item-top">
+        <span class="item-name">${esc(p.name)}</span>
+        <span class="item-dist">${d}</span>
+      </div>
+      <div class="item-meta">${esc(p.area)} · ${esc(p.category)} · ★${p.rating||'-'} · ${esc(p.price)}</div>
+      <div class="item-detail">
+        <div class="d-row"><span class="d-label">价格</span>${esc(p.price)}</div>
+        <div class="d-row"><span class="d-label">评分</span>★ ${p.rating||'无'}</div>
+        <div class="d-row"><span class="d-label">区域</span>${esc(p.area)}</div>
+        <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank" rel="noopener">在 Google Maps 打开</a>
+      </div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      selectedId = (selectedId === id) ? null : id;
+      renderList();
+      if (selectedId) {
+        const p = PLACES.find(x => x.id === selectedId);
+        if (p && gmap) {
+          gmap.panTo({ lat: p.lat, lng: p.lng });
+          gmap.setZoom(15);
+          showInfo(p, gmarkers[p.id]);
         }
-        return `<span class="star${filled}" aria-hidden="true">★</span>`;
-      }).join("");
-    }
-
-    async function handleFileImport(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const text = await file.text();
-      let imported;
-      try {
-        imported = file.name.toLowerCase().endsWith(".csv") ? parseCsv(text) : JSON.parse(text);
-      } catch (error) {
-        alert("文件无法解析，请检查 JSON 或 CSV 格式。");
-        event.target.value = "";
-        return;
-      }
-      const normalized = normalizePlaces(Array.isArray(imported) ? imported : imported.places || []);
-      if (!normalized.length) {
-        alert("没有找到可用地点。至少需要 name、lat、lng。");
-        event.target.value = "";
-        return;
-      }
-      places = normalized;
-      if (!Array.isArray(imported) && imported.notes && typeof imported.notes === "object") {
-        notes = imported.notes;
-        saveNotes();
-      }
-      selectedId = places[0].id;
-      savePlaces();
-      fitToPlaces();
-      renderAll();
-      event.target.value = "";
-    }
-
-    function parseCsv(text) {
-      const rows = [];
-      let row = [];
-      let cell = "";
-      let quoted = false;
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const next = text[i + 1];
-        if (char === '"' && quoted && next === '"') {
-          cell += '"';
-          i++;
-        } else if (char === '"') {
-          quoted = !quoted;
-        } else if (char === "," && !quoted) {
-          row.push(cell.trim());
-          cell = "";
-        } else if ((char === "\n" || char === "\r") && !quoted) {
-          if (char === "\r" && next === "\n") i++;
-          row.push(cell.trim());
-          if (row.some(Boolean)) rows.push(row);
-          row = [];
-          cell = "";
-        } else {
-          cell += char;
-        }
-      }
-      row.push(cell.trim());
-      if (row.some(Boolean)) rows.push(row);
-      const headers = rows.shift() || [];
-      return rows.map((cells) => Object.fromEntries(headers.map((header, index) => [header, cells[index] || ""])));
-    }
-
-    function exportData() {
-      const data = {
-        places,
-        notes,
-        exportedAt: new Date().toISOString()
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "kl-food-map.json";
-      link.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function resetSample() {
-      if (!confirm("恢复示例地点？你的星级和备注会保留。")) return;
-      places = samplePlaces;
-      selectedId = places[0].id;
-      savePlaces();
-      fitToPlaces();
-      renderAll();
-    }
-
-    function openGoogleMaps(place) {
-      const url = place.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name} ${place.area} Kuala Lumpur`)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
-
-    function fitToPlaces() {
-      const bounds = L.latLngBounds(places.map((place) => [place.lat, place.lng]));
-      if (bounds.isValid()) map.fitBounds(bounds.pad(0.18), { maxZoom: 14 });
-    }
-
-    function focusInitialView() {
-      const place = places.find((item) => item.id === selectedId) || places[0];
-      if (place) {
-        map.setView([place.lat, place.lng], 14);
       } else {
-        map.setView(DEFAULT_CENTER, 13);
+        if (infoWindow) infoWindow.close();
       }
-    }
+      highlightMarker(selectedId);
+    });
+  });
 
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+  highlightMarker(selectedId);
+}
 
-    function escapeAttr(value) {
-      return escapeHtml(value).replace(/`/g, "&#096;");
-    }
+// ===== 工具函数 =====
+function dist(p) {
+  if (myLat == null) return Infinity;
+  const R = 6371, dLat = (p.lat-myLat)*Math.PI/180, dLng = (p.lng-myLng)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(myLat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function formatDist(km) {
+  if (!isFinite(km)) return '—';
+  return km < 1 ? Math.round(km*1000)+' m' : km.toFixed(1)+' km';
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
 
-    setTimeout(fitToPlaces, 100);
-  </script>
+<!-- Google Maps API - 你需要替换成自己的 API Key -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQfnrSZ-a8j5alavgI_i1qkLWFfX3A9mM&callback=initMap"></script>
+
 </body>
 </html>
