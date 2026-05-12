@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>项目介绍 - Adam's Space</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+    body {
+      min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+      background: #ffffff; color: #37352f; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page { max-width: 720px; margin: 0 auto; padding: 80px 24px 60px; }
+    .breadcrumb {
+      font-size: 13px; color: #787774; margin-bottom: 24px;
+    }
+    .breadcrumb a { color: #787774; text-decoration: none; }
+    .breadcrumb a:hover { color: #37352f; }
+    .cover { font-size: 64px; margin-bottom: 12px; }
+    .page-title { font-size: 36px; font-weight: 700; color: #37352f; margin-bottom: 8px; letter-spacing: -0.5px; }
+    .page-desc { font-size: 15px; color: #787774; margin-bottom: 36px; }
+    .divider { height: 1px; background: #e8e7e4; margin: 32px 0; }
+
+    /* 项目卡片 */
+    .project {
+      padding: 20px; border: 1px solid #e8e7e4; border-radius: 8px;
+      margin-bottom: 16px; transition: background 0.15s, box-shadow 0.15s;
+    }
+    .project:hover { background: #f7f6f3; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .project-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .project-icon { font-size: 28px; }
+    .project-name { font-size: 16px; font-weight: 600; color: #37352f; }
+    .project-desc { font-size: 14px; color: #787774; line-height: 1.7; margin-bottom: 12px; }
+    .project-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .project-tag {
+      font-size: 11px; padding: 3px 8px; border-radius: 4px;
+      background: #f1f1ef; color: #55534e; font-weight: 500;
+    }
+    .project-link {
+      display: inline-block; margin-top: 10px; font-size: 13px;
+      color: #2eaadc; text-decoration: none; font-weight: 500;
+    }
+    .project-link:hover { text-decoration: underline; }
+
+    .empty-state {
+      text-align: center; padding: 48px 24px; color: #b4b4b0; font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 48px 20px 40px; }
+      .page-title { font-size: 28px; }
+      .cover { font-size: 48px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <div class="breadcrumb"><a href="../">← Adam's Space</a></div>
+  <div class="cover">🛠️</div>
+  <h1 class="page-title">项目介绍</h1>
+  <p class="page-desc">一些我做过的有趣项目</p>
+
+  <!-- 项目列表 -->
+  <div class="project">
+    <div class="project-header">
+      <span class="project-icon">🍜</span>
+      <span class="project-name">吉隆坡美食地图</span>
+    </div>
+    <p class="project-desc">
+      一个基于 Google Maps 的互动美食地图，收录了我在吉隆坡探索过的餐厅。支持距离排序、导入收藏、一键跳转 Google Maps 导航。
+    </p>
+    <div class="project-tags">
+      <span class="project-tag">Google Maps API</span>
+      <span class="project-tag">HTML/CSS/JS</span>
+      <span class="project-tag">响应式设计</span>
+      <span class="project-tag">GeoJSON</span>
+    </div>
+    <a class="project-link" href="../food-map/">查看项目 →</a>
+  </div>
+
+  <div class="project">
+    <div class="project-header">
+      <span class="project-icon">🚧</span>
+      <span class="project-name">更多项目</span>
+    </div>
+    <p class="project-desc">
+      持续更新中...
+    </p>
+  </div>
+
+  <div class="divider"></div>
+
+  <p style="font-size:13px; color:#b4b4b0; text-align:center;">© 2025 Adam · Built with ❤️</p>
+</div>
+
+</body>
+</html>
